@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowLeft, Edit, Calendar, ArrowRightLeft } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface Site {
   id: string;
@@ -73,8 +74,9 @@ export default function EmployeeDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["planning"] });
       setShowTransfer(false);
       setTransferError("");
+      toast.success("Transfert effectué");
     },
-    onError: (err: Error) => setTransferError(err.message),
+    onError: (err: Error) => { setTransferError(err.message); toast.error(err.message); },
   });
 
   if (isLoading) {

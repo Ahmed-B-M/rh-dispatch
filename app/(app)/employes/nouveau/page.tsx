@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface Site {
   id: string;
@@ -60,9 +61,10 @@ export default function NouvelEmployePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employé créé");
       router.push("/employes");
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: Error) => { setError(err.message); toast.error(err.message); },
   });
 
   function handleSubmit(e: React.FormEvent) {

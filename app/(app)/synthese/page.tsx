@@ -5,6 +5,7 @@ import { useState, useCallback, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Download, Search, Filter, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -143,7 +144,9 @@ export default function SynthesePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workEntries"] });
       queryClient.invalidateQueries({ queryKey: ["planning"] });
+      toast.success("Cellule mise à jour");
     },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const handleCellClick = useCallback(

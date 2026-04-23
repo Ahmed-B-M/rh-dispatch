@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Plus, Shield, UserPlus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface UserItem {
   id: string;
@@ -66,7 +67,9 @@ export default function ParametresPage() {
       queryClient.invalidateQueries({ queryKey: ["users"] });
       setNewUser({ name: "", email: "", password: "", role: "RESPONSABLE", siteIds: [] });
       setShowUserForm(false);
+      toast.success("Utilisateur créé");
     },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   function toggleSite(siteId: string) {

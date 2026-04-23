@@ -23,7 +23,7 @@ interface Employee {
 
 export default function EmployesPage() {
   const { data: session } = useSession();
-  const isAdmin = session?.user?.role === "ADMIN";
+  const canManage = session?.user?.role === "ADMIN" || session?.user?.role === "RESPONSABLE";
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [filterCategorie, setFilterCategorie] = useState<string>("");
@@ -65,7 +65,7 @@ export default function EmployesPage() {
           <h1 className="text-2xl font-bold text-slate-900">Employés</h1>
           <p className="text-sm text-slate-500">{employees.length} employé(s) trouvé(s)</p>
         </div>
-        {isAdmin && (
+        {canManage && (
           <Link
             href="/employes/nouveau"
             className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-primary-700"

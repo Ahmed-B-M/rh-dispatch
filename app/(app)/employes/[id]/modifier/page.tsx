@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 import Link from "next/link";
 
 interface Site {
@@ -92,9 +93,10 @@ export default function ModifierEmployePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["employee", id] });
       queryClient.invalidateQueries({ queryKey: ["employees"] });
+      toast.success("Employé mis à jour");
       router.push(`/employes/${id}`);
     },
-    onError: (err: Error) => setError(err.message),
+    onError: (err: Error) => { setError(err.message); toast.error(err.message); },
   });
 
   function updateField(field: string, value: unknown) {
