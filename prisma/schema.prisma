@@ -1,0 +1,185 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- REFERENCE DATA ---
+
+model AbsenceCode {
+  id        String      @id @default(cuid())
+  code      String      @unique
+  label     String
+  color     String
+  isWork    Boolean     @default(false)
+  sortOrder Int         @default(0)
+  entries   WorkEntry[]
+}
+
+model Site {
+  id        String         @id @default(cuid())
+  code      String         @unique
+  label     String
+  isActive  Boolean        @default(true)
+  employees EmployeeSite[]
+  users     UserSite[]
+  createdAt DateTime       @default(now())
+}
+
+model Vehicle {
+  id           String      @id @default(cuid())
+  registration String      @unique
+  isActive     Boolean     @default(true)
+  entries      WorkEntry[]
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+// --- EMPLOYEES ---
+
+model Employee {
+  id              String           @id @default(cuid())
+  matricule       String           @unique
+  nom             String
+  prenom          String
+  typeContrat     ContractType
+  categorie       EmployeeCategory
+  poste           String
+  affectationCode String?
+  dateDebut       DateTime
+  dateFin         DateTime?
+  dateEntree      DateTime
+  dateSortie      DateTime?
+  isActive        Boolean          @default(true)
+  photoUrl        String?
+  note            String?
+  sites           EmployeeSite[]
+  entries         WorkEntry[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@index([matricule])
+  @@index([isActive])
+  @@index([categorie])
+}
+
+model EmployeeSite {
+  id         String    @id @default(cuid())
+  employeeId String
+  siteId     String
+  isPrimary  Boolean   @default(true)
+  startDate  DateTime
+  endDate    DateTime?
+  employee   Employee  @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  site       Site      @relation(fields: [siteId], references: [id])
+
+  @@unique([employeeId, siteId, startDate])
+  @@index([employeeId])
+  @@index([siteId])
+}
+
+// --- WORK ENTRIES ---
+
+model WorkEntry {
+  id              String       @id @default(cuid())
+  employeeId      String
+  date            DateTime     @db.Date
+  weekNumber      Int
+  dayName         String
+
+  affectation     String?
+  typeContrat     ContractType
+  matricule       String
+  nomConducteur   String
+  posteOccupe     String?
+
+  absenceCodeId   String?
+  heureDebut      String?
+  heureFin        String?
+  tempsTravail    String?
+  heuresDecimales Decimal?     @db.Decimal(5, 2)
+
+  vehicleId       String?
+  typeRoute       String?
+  nbKm            Decimal?     @db.Decimal(8, 2)
+
+  source          EntrySource  @default(MANUAL)
+  importBatchId   String?
+
+  absenceCode     AbsenceCode? @relation(fields: [absenceCodeId], references: [id])
+  employee        Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  vehicle         Vehicle?     @relation(fields: [vehicleId], references: [id])
+
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  updatedBy       String?
+
+  @@unique([employeeId, date])
+  @@index([date])
+  @@index([employeeId])
+  @@index([matricule])
+  @@index([weekNumber])
+  @@index([absenceCodeId])
+}
+
+model ImportBatch {
+  id           String   @id @default(cuid())
+  filename     String
+  source       String
+  rowsTotal    Int
+  rowsImported Int
+  rowsSkipped  Int
+  errors       Json?
+  createdAt    DateTime @default(now())
+  createdBy    String
+}
+
+model User {
+  id           String     @id @default(cuid())
+  name         String?
+  email        String?    @unique
+  password     String?
+  role         UserRole   @default(RESPONSABLE)
+  sites        UserSite[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model UserSite {
+  id     String @id @default(cuid())
+  userId String
+  siteId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  site   Site   @relation(fields: [siteId], references: [id])
+
+  @@unique([userId, siteId])
+  @@index([userId])
+  @@index([siteId])
+}
+
+// --- ENUMS ---
+
+enum ContractType {
+  CDI
+  CDD
+  ALTERNANCE
+}
+
+enum EmployeeCategory {
+  SEDENTAIRE
+  TRANSPORT
+  LOGISTIQUE
+}
+
+enum UserRole {
+  ADMIN
+  RESPONSABLE
+}
+
+enum EntrySource {
+  MANUAL
+  IMPORT_EXCEL
+}

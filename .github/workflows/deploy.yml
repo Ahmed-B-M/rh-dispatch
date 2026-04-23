@@ -1,0 +1,55 @@
+name: Deploy RH-Dispatch
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: deploy-rh-dispatch
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          timeout: 60s
+          command_timeout: 15m
+          script: |
+            set -e
+
+            echo ">>> Pull rh-dispatch..."
+            cd ~/rh-dispatch
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo ">>> Ensure shared network exists..."
+            docker network create id360-shared 2>/dev/null || true
+
+            echo ">>> Detect supabase network name..."
+            SUPABASE_NET=$(docker inspect supabase-kong --format '{{range $net, $conf := .NetworkSettings.Networks}}{{$net}} {{end}}' 2>/dev/null | tr ' ' '\n' | grep -v '^$' | head -1)
+            echo "Supabase network: $SUPABASE_NET"
+            sed -i "s/name: docker_default/name: $SUPABASE_NET/" docker-compose.prod.yml
+
+            echo ">>> Remove stale container..."
+            docker rm -f rh-dispatch 2>/dev/null || true
+
+            echo ">>> Build and restart rh-dispatch..."
+            docker compose -f docker-compose.prod.yml up -d --build
+
+            echo ">>> Health check..."
+            sleep 5
+            docker exec rh-dispatch wget -q -O /dev/null http://127.0.0.1:3000/ && echo "RH-Dispatch: OK" || echo "RH-Dispatch: FAIL (may need more time to start)"
+
+            echo ">>> Cleanup..."
+            docker image prune -f
+
+            echo ">>> Deploy done - $(date)"

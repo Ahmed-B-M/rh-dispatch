@@ -1,0 +1,35 @@
+services:
+  rh-dispatch:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rh-dispatch
+    restart: always
+    expose:
+      - "3000"
+    env_file:
+      - .env.production
+    environment:
+      - NODE_ENV=production
+    networks:
+      - id360-shared
+      - supabase
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  id360-shared:
+    external: true
+  supabase:
+    external: true
+    name: docker_default
