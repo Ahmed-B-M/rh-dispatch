@@ -39,6 +39,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       },
     });
 
+    const NON_ABSENCE_CODES = new Set([
+      "Repos",
+      "Conges payes",
+      "Congés sans solde",
+      "Repos compensateur",
+    ]);
+
     let totalHours = 0;
     let workDays = 0;
     let absenceDays = 0;
@@ -51,7 +58,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
       if (entry.absenceCode?.isWork) {
         workDays++;
-      } else if (entry.absenceCode) {
+      } else if (entry.absenceCode && !NON_ABSENCE_CODES.has(entry.absenceCode.code)) {
         absenceDays++;
         const key = entry.absenceCode.code;
         const existing = absenceCountMap.get(key);

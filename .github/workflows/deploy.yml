@@ -45,6 +45,12 @@ jobs:
             echo ">>> Build and restart rh-dispatch..."
             docker compose -f docker-compose.prod.yml up -d --build
 
+            echo ">>> Run migrations..."
+            docker exec rh-dispatch npx prisma migrate deploy
+
+            echo ">>> Seed reference data..."
+            docker exec rh-dispatch npx tsx prisma/seed.ts
+
             echo ">>> Health check..."
             sleep 5
             docker exec rh-dispatch wget -q -O /dev/null http://127.0.0.1:3000/ && echo "RH-Dispatch: OK" || echo "RH-Dispatch: FAIL (may need more time to start)"
