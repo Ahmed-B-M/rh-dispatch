@@ -33,6 +33,22 @@ export function minutesToDecimal(minutes: number): number {
   return parseFloat((minutes / 60).toFixed(2));
 }
 
+export function nightHoursOverlap(startStr: string, endStr: string): number {
+  const start = timeToMinutes(startStr);
+  let end = timeToMinutes(endStr);
+  if (end <= start) end += 1440;
+
+  const overlap = (a1: number, a2: number, b1: number, b2: number) =>
+    Math.max(0, Math.min(a2, b2) - Math.max(a1, b1));
+
+  const mins =
+    overlap(start, end, 0, 360) +
+    overlap(start, end, 1260, 1440) +
+    overlap(start, end, 1440, 1800);
+
+  return parseFloat((mins / 60).toFixed(2));
+}
+
 const DAY_NAMES_FR = ["Dimanche", "Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 export function getDayNameFr(date: Date): string {

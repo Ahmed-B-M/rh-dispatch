@@ -1,0 +1,114 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { startOfMonth, endOfMonth } from "date-fns";
+import { nightHoursOverlap } from "@/lib/time-utils";
+
+export async function GET(req: NextRequest): Promise<NextResponse> {
+  try {
+    const session = await requireAuth();
+    const { searchParams } = req.nextUrl;
+
+    const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()), 10);
+    const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1), 10);
+    const siteId = searchParams.get("siteId") || undefined;
+    const categorie = searchParams.get("categorie") || undefined;
+
+    const monthStart = startOfMonth(new Date(year, month - 1));
+    const monthEnd = endOfMonth(monthStart);
+
+    const allowedSites = getAllowedSiteIds(session);
+
+    const employeeWhere: Record<string, unknown> = { isActive: true };
+    if (siteId) {
+      employeeWhere.sites = { some: { siteId, endDate: null } };
+    } else if (allowedSites) {
+      employeeWhere.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
+    }
+    if (categorie) {
+      employeeWhere.categorie = categorie;
+    }
+
+    const employees = await prisma.employee.findMany({
+      where: employeeWhere,
+      orderBy: [{ nom: "asc" }, { prenom: "asc" }],
+      select: {
+        id: true,
+        matricule: true,
+        nom: true,
+        prenom: true,
+        poste: true,
+        categorie: true,
+        typeContrat: true,
+        entries: {
+          where: {
+            date: { gte: monthStart, lte: monthEnd },
+          },
+          select: {
+            heureDebut: true,
+            heureFin: true,
+            heuresDecimales: true,
+            absenceCode: { select: { isWork: true } },
+          },
+        },
+      },
+    });
+
+    const posteConfigs = await prisma.posteConfig.findMany({
+      where: { isActive: true },
+    });
+    const posteMap = new Map(posteConfigs.map((p) => [p.label, Number(p.mealAllowance)]));
+
+    const rows = employees.map((emp) => {
+      let joursTravailles = 0;
+      let heuresTotales = 0;
+      let heuresNuit = 0;
+
+      for (const entry of emp.entries) {
+        const isWork = entry.absenceCode?.isWork === true;
+        if (isWork) {
+          joursTravailles++;
+          heuresTotales += entry.heuresDecimales ? Number(entry.heuresDecimales) : 0;
+
+          if (entry.heureDebut && entry.heureFin) {
+            heuresNuit += nightHoursOverlap(entry.heureDebut, entry.heureFin);
+          }
+        }
+      }
+
+      const mealRate = posteMap.get(emp.poste) ?? 0;
+      const montantPanier = Math.round(joursTravailles * mealRate * 100) / 100;
+
+      return {
+        employeeId: emp.id,
+        matricule: emp.matricule,
+        nom: emp.nom,
+        prenom: emp.prenom,
+        poste: emp.poste,
+        categorie: emp.categorie,
+        typeContrat: emp.typeContrat,
+        joursTravailles,
+        heuresTotales: Math.round(heuresTotales * 100) / 100,
+        heuresNuit: Math.round(heuresNuit * 100) / 100,
+        nbPanierRepas: joursTravailles,
+        tarifPanier: mealRate,
+        montantPanier,
+      };
+    });
+
+    return NextResponse.json({
+      year,
+      month,
+      rows,
+      totals: {
+        joursTravailles: rows.reduce((s, r) => s + r.joursTravailles, 0),
+        heuresTotales: Math.round(rows.reduce((s, r) => s + r.heuresTotales, 0) * 100) / 100,
+        heuresNuit: Math.round(rows.reduce((s, r) => s + r.heuresNuit, 0) * 100) / 100,
+        montantPanier: Math.round(rows.reduce((s, r) => s + r.montantPanier, 0) * 100) / 100,
+      },
+    });
+  } catch (err) {
+    if (err instanceof NextResponse) return err;
+    return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
+  }
+}

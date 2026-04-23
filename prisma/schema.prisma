@@ -38,6 +38,15 @@ model Vehicle {
   updatedAt    DateTime    @updatedAt
 }
 
+model PosteConfig {
+  id            String   @id @default(cuid())
+  label         String   @unique
+  mealAllowance Decimal  @default(0) @db.Decimal(6, 2)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 // --- EMPLOYEES ---
 
 model Employee {
