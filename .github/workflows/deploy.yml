@@ -42,14 +42,17 @@ jobs:
             echo ">>> Remove stale container..."
             docker rm -f rh-dispatch 2>/dev/null || true
 
-            echo ">>> Build and restart rh-dispatch..."
-            docker compose -f docker-compose.prod.yml up -d --build
+            echo ">>> Build images..."
+            docker compose -f docker-compose.prod.yml build
 
             echo ">>> Run migrations..."
-            docker exec rh-dispatch npx prisma migrate deploy
+            docker compose -f docker-compose.prod.yml run --rm migrator
 
             echo ">>> Seed reference data..."
-            docker exec rh-dispatch node --experimental-strip-types prisma/seed.ts || echo "Seed skipped (non-fatal)"
+            docker compose -f docker-compose.prod.yml run --rm migrator node --experimental-strip-types prisma/seed.ts || echo "Seed skipped (non-fatal)"
+
+            echo ">>> Start rh-dispatch..."
+            docker compose -f docker-compose.prod.yml up -d rh-dispatch
 
             echo ">>> Health check..."
             sleep 5

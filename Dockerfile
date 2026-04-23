@@ -22,7 +22,17 @@ RUN npx prisma generate
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
-# Stage 3: runner
+# Stage 3: migrator (full deps for prisma CLI and seed)
+FROM node:22-alpine AS migrator
+WORKDIR /app
+RUN apk add --no-cache openssl
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+CMD ["npx", "prisma", "migrate", "deploy"]
+
+# Stage 4: runner
 FROM node:22-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
@@ -37,10 +47,7 @@ COPY --from=builder /app/prisma               ./prisma
 COPY --from=builder /app/prisma.config.ts     ./prisma.config.ts
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma  ./node_modules/prisma
 COPY --from=builder /app/node_modules/pg      ./node_modules/pg
-COPY --from=builder /app/node_modules/bcryptjs ./node_modules/bcryptjs
-COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 USER nextjs
 EXPOSE 3000
 ENV PORT=3000

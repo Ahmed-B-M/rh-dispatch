@@ -1,8 +1,19 @@
 services:
+  migrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: migrator
+    env_file:
+      - .env.production
+    networks:
+      - supabase
+
   rh-dispatch:
     build:
       context: .
       dockerfile: Dockerfile
+      target: runner
     container_name: rh-dispatch
     restart: always
     expose:
