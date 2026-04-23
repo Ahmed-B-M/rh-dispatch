@@ -62,9 +62,20 @@ export default function SynthesePage() {
   const [dateFrom, setDateFrom] = useState(format(startOfMonth(now), "yyyy-MM-dd"));
   const [dateTo, setDateTo] = useState(format(endOfMonth(now), "yyyy-MM-dd"));
   const [search, setSearch] = useState("");
+  const [filterCategorie, setFilterCategorie] = useState("");
+  const [filterSiteId, setFilterSiteId] = useState("");
   const [page, setPage] = useState(1);
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
   const [editValue, setEditValue] = useState("");
+
+  const { data: sites = [] } = useQuery<{ id: string; code: string; label: string }[]>({
+    queryKey: ["sites"],
+    queryFn: async () => {
+      const res = await fetch("/api/sites");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      return res.json();
+    },
+  });
 
   const { data: absenceCodes = [] } = useQuery<AbsenceCode[]>({
     queryKey: ["absenceCodes"],
@@ -81,7 +92,7 @@ export default function SynthesePage() {
     page: number;
     limit: number;
   }>({
-    queryKey: ["workEntries", dateFrom, dateTo, search, page],
+    queryKey: ["workEntries", dateFrom, dateTo, search, filterCategorie, filterSiteId, page],
     queryFn: async () => {
       const params = new URLSearchParams({
         from: dateFrom,
@@ -90,6 +101,8 @@ export default function SynthesePage() {
         limit: "1000",
       });
       if (search) params.set("search", search);
+      if (filterCategorie) params.set("categorie", filterCategorie);
+      if (filterSiteId) params.set("siteId", filterSiteId);
       const res = await fetch(`/api/work-entries?${params}`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
@@ -129,6 +142,7 @@ export default function SynthesePage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workEntries"] });
+      queryClient.invalidateQueries({ queryKey: ["planning"] });
     },
   });
 
@@ -167,6 +181,8 @@ export default function SynthesePage() {
   async function handleExport() {
     const params = new URLSearchParams({ from: dateFrom, to: dateTo, format: "synthesis" });
     if (search) params.set("search", search);
+    if (filterCategorie) params.set("categorie", filterCategorie);
+    if (filterSiteId) params.set("siteId", filterSiteId);
     window.location.href = `/api/export?${params}`;
   }
 
@@ -210,6 +226,28 @@ export default function SynthesePage() {
             className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-primary-500"
           />
         </div>
+        <select
+          value={filterCategorie}
+          onChange={(e) => { setFilterCategorie(e.target.value); setPage(1); }}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-primary-500"
+        >
+          <option value="">Toutes catégories</option>
+          <option value="SEDENTAIRE">Sédentaire</option>
+          <option value="TRANSPORT">Transport</option>
+          <option value="LOGISTIQUE">Logistique</option>
+        </select>
+        <select
+          value={filterSiteId}
+          onChange={(e) => { setFilterSiteId(e.target.value); setPage(1); }}
+          className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-primary-500"
+        >
+          <option value="">Tous les sites</option>
+          {sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {site.code} — {site.label}
+            </option>
+          ))}
+        </select>
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" />
           <input

@@ -80,15 +80,13 @@ export default function EmployeeDetailPage() {
             </div>
           </div>
         </div>
-        {isAdmin && (
-          <Link
-            href={`/employes/${id}/modifier`}
-            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
-          >
-            <Edit className="h-4 w-4" />
-            Modifier
-          </Link>
-        )}
+        <Link
+          href={`/employes/${id}/modifier`}
+          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+        >
+          <Edit className="h-4 w-4" />
+          Modifier
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">

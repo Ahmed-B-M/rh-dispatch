@@ -13,6 +13,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const to = searchParams.get("to");
     const employeeId = searchParams.get("employeeId");
     const siteId = searchParams.get("siteId");
+    const categorie = searchParams.get("categorie");
     const absenceCode = searchParams.get("absenceCode");
     const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") ?? "1", 10);
@@ -39,10 +40,17 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       ];
     }
 
+    const employeeFilter: Record<string, unknown> = {};
     if (siteId) {
-      where.affectation = siteId;
+      employeeFilter.sites = { some: { siteId } };
     } else if (allowedSites) {
-      where.employee = { sites: { some: { siteId: { in: allowedSites } } } };
+      employeeFilter.sites = { some: { siteId: { in: allowedSites } } };
+    }
+    if (categorie) {
+      employeeFilter.categorie = categorie;
+    }
+    if (Object.keys(employeeFilter).length > 0) {
+      where.employee = employeeFilter;
     }
 
     const [entries, total] = await Promise.all([

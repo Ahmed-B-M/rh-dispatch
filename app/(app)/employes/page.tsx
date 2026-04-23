@@ -27,14 +27,25 @@ export default function EmployesPage() {
   const [search, setSearch] = useState("");
   const [showInactive, setShowInactive] = useState(false);
   const [filterCategorie, setFilterCategorie] = useState<string>("");
+  const [filterSiteId, setFilterSiteId] = useState<string>("");
+
+  const { data: sites = [] } = useQuery<{ id: string; code: string; label: string }[]>({
+    queryKey: ["sites"],
+    queryFn: async () => {
+      const res = await fetch("/api/sites");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      return res.json();
+    },
+  });
 
   const { data: employees = [], isLoading } = useQuery<Employee[]>({
-    queryKey: ["employees", search, showInactive, filterCategorie],
+    queryKey: ["employees", search, showInactive, filterCategorie, filterSiteId],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (!showInactive) params.set("active", "true");
       if (filterCategorie) params.set("categorie", filterCategorie);
+      if (filterSiteId) params.set("siteId", filterSiteId);
       const res = await fetch(`/api/employees?${params}`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
@@ -87,6 +98,19 @@ export default function EmployesPage() {
           <option value="SEDENTAIRE">Sédentaire</option>
           <option value="TRANSPORT">Transport</option>
           <option value="LOGISTIQUE">Logistique</option>
+        </select>
+
+        <select
+          value={filterSiteId}
+          onChange={(e) => setFilterSiteId(e.target.value)}
+          className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+        >
+          <option value="">Tous les sites</option>
+          {sites.map((site) => (
+            <option key={site.id} value={site.id}>
+              {site.code} — {site.label}
+            </option>
+          ))}
         </select>
 
         <label className="flex items-center gap-2 text-sm text-slate-600">

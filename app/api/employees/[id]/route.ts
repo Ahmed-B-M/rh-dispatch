@@ -37,7 +37,7 @@ export async function GET(_req: NextRequest, ctx: RouteContext): Promise<NextRes
 
 export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResponse> {
   try {
-    await requireAdmin();
+    await requireAuth();
     const { id } = await ctx.params;
     const body = await req.json();
     const data = employeeUpdateSchema.parse(body);

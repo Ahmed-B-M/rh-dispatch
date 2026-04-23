@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
 import {
-  startOfMonth,
-  endOfMonth,
+  startOfWeek,
+  endOfWeek,
   eachDayOfInterval,
   format,
 } from "date-fns";
@@ -13,15 +13,21 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const session = await requireAuth();
     const { searchParams } = req.nextUrl;
 
-    const year = parseInt(searchParams.get("year") ?? String(new Date().getFullYear()), 10);
-    const month = parseInt(searchParams.get("month") ?? String(new Date().getMonth() + 1), 10);
+    const fromParam = searchParams.get("from");
+    const toParam = searchParams.get("to");
     const siteId = searchParams.get("siteId");
     const categorie = searchParams.get("categorie");
 
-    const monthStart = startOfMonth(new Date(year, month - 1));
-    const monthEnd = endOfMonth(monthStart);
-    const days = eachDayOfInterval({ start: monthStart, end: monthEnd }).map((d) =>
-      format(d, "yyyy-MM-dd"),
+    const baseDate = fromParam ? new Date(fromParam) : new Date();
+    const periodStart = fromParam
+      ? new Date(fromParam)
+      : startOfWeek(baseDate, { weekStartsOn: 1 });
+    const periodEnd = toParam
+      ? new Date(toParam)
+      : endOfWeek(baseDate, { weekStartsOn: 1 });
+
+    const days = eachDayOfInterval({ start: periodStart, end: periodEnd }).map(
+      (d) => format(d, "yyyy-MM-dd"),
     );
 
     const allowedSites = getAllowedSiteIds(session);
@@ -43,6 +49,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         prenom: true,
         categorie: true,
         typeContrat: true,
+        poste: true,
       },
       orderBy: { nom: "asc" },
     });
@@ -50,15 +57,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const entries = await prisma.workEntry.findMany({
       where: {
         employeeId: { in: employees.map((e) => e.id) },
-        date: { gte: monthStart, lte: monthEnd },
+        date: { gte: periodStart, lte: periodEnd },
       },
       include: {
-        absenceCode: { select: { code: true, color: true } },
-        vehicle: { select: { registration: true } },
+        absenceCode: { select: { id: true, code: true, color: true } },
+        vehicle: { select: { id: true, registration: true } },
       },
     });
 
-    const entryMap = new Map<string, typeof entries[number]>();
+    const entryMap = new Map<string, (typeof entries)[number]>();
     for (const entry of entries) {
       const key = `${entry.employeeId}_${format(entry.date, "yyyy-MM-dd")}`;
       entryMap.set(key, entry);
@@ -71,18 +78,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         return {
           date: day,
           entryId: entry?.id ?? null,
+          absenceCodeId: entry?.absenceCode?.id ?? null,
           absenceCode: entry?.absenceCode?.code ?? null,
           absenceColor: entry?.absenceCode?.color ?? null,
           heureDebut: entry?.heureDebut ?? null,
           heureFin: entry?.heureFin ?? null,
-          heuresDecimales: entry?.heuresDecimales ? Number(entry.heuresDecimales) : null,
+          heuresDecimales: entry?.heuresDecimales
+            ? Number(entry.heuresDecimales)
+            : null,
+          vehicleId: entry?.vehicle?.id ?? null,
           vehicule: entry?.vehicle?.registration ?? null,
           nbKm: entry?.nbKm ? Number(entry.nbKm) : null,
+          typeRoute: entry?.typeRoute ?? null,
         };
       }),
     }));
 
-    return NextResponse.json({ year, month, days, matrix });
+    return NextResponse.json({
+      from: format(periodStart, "yyyy-MM-dd"),
+      to: format(periodEnd, "yyyy-MM-dd"),
+      days,
+      matrix,
+    });
   } catch (err) {
     if (err instanceof NextResponse) return err;
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
