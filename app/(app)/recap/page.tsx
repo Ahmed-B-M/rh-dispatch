@@ -362,7 +362,7 @@ function RecapContent() {
                   onClick={() => toggleSort("heuresTotales")}
                 >
                   <span className="inline-flex items-center justify-end gap-1">
-                    Heures
+                    H. totales
                     <ArrowUpDown className={cn("h-3 w-3", sortField === "heuresTotales" ? "text-primary-500" : "text-slate-300")} />
                   </span>
                 </th>

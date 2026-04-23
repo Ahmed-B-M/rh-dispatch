@@ -152,6 +152,7 @@ model User {
   email        String?    @unique
   password     String?
   role         UserRole   @default(RESPONSABLE)
+  allowedPages String[]   @default([])
   sites        UserSite[]
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt

@@ -34,6 +34,7 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
           allowedSiteIds: user.sites.map((s) => s.siteId),
+          allowedPages: user.allowedPages ?? [],
         };
       },
     }),
@@ -47,6 +48,7 @@ export const authOptions: NextAuthOptions = {
         token.id = user.id;
         token.role = user.role;
         token.allowedSiteIds = user.allowedSiteIds ?? [];
+        token.allowedPages = user.allowedPages ?? [];
       }
       if (trigger === "update") {
         try {
@@ -57,12 +59,14 @@ export const authOptions: NextAuthOptions = {
           if (dbUser) {
             token.role = dbUser.role;
             token.allowedSiteIds = dbUser.sites.map((s) => s.siteId);
+            token.allowedPages = dbUser.allowedPages ?? [];
           }
         } catch {
           // DB unreachable — keep existing token values
         }
       }
       if (!token.allowedSiteIds) token.allowedSiteIds = [];
+      if (!token.allowedPages) token.allowedPages = [];
       return token;
     },
     async session({ session, token }) {
@@ -70,6 +74,7 @@ export const authOptions: NextAuthOptions = {
         session.user.id = token.id;
         session.user.role = token.role;
         session.user.allowedSiteIds = token.allowedSiteIds ?? [];
+        session.user.allowedPages = token.allowedPages ?? [];
       }
       return session;
     },

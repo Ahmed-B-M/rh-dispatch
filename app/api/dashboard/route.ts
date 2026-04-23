@@ -44,6 +44,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       "Conges payes",
       "Congés sans solde",
       "Repos compensateur",
+      "Paternité",
+      "Congés naissance",
     ]);
 
     let totalHours = 0;

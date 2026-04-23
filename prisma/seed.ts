@@ -34,6 +34,7 @@ const SITES = [
   { code: "CASTRIES", label: "Castries" },
   { code: "ANTIBES", label: "Antibes" },
   { code: "ROSNY", label: "Rosny" },
+  { code: "AIX", label: "Aix-en-Provence" },
 ] as const;
 
 const POSTES = [
@@ -49,6 +50,19 @@ const POSTES = [
   { label: "Préparateur de commandes", mealAllowance: 7.30 },
   { label: "Agent administratif", mealAllowance: 0 },
 ] as const;
+
+const USERS = [
+  { email: "aramdani@id-logistics.com", name: "Abdelhak RAMDANI", role: "ADMIN" as const, sites: [] as string[], allowedPages: [] as string[] },
+  { email: "nnarrainen@id-logistics.com", name: "Nedy NARRAINEN", role: "ADMIN" as const, sites: [] as string[], allowedPages: [] as string[] },
+  { email: "adiallo@id-logistics.com", name: "Aissatou DIALLO", role: "RESPONSABLE" as const, sites: ["VLG"], allowedPages: [] as string[] },
+  { email: "ebilland@id-logistics.com", name: "Estelle BILLAND", role: "RESPONSABLE" as const, sites: ["VLG", "LPP", "RUNGIS", "VITRY"], allowedPages: [] as string[] },
+  { email: "lizidi@id-logistics.com", name: "Logan IZIDI", role: "RESPONSABLE" as const, sites: ["AIX", "CASTRIES", "ANTIBES"], allowedPages: [] as string[] },
+  { email: "sdiabira@id-logistics.com", name: "Seckou DIABIRA", role: "RESPONSABLE" as const, sites: ["RUNGIS"], allowedPages: ["/planning"] },
+  { email: "okonioko@id-logistics.com", name: "Olivier KONIOKO", role: "RESPONSABLE" as const, sites: ["VITRY"], allowedPages: ["/planning"] },
+  { email: "mamessaoudene@id-logistics.com", name: "M'hamed Amine MESSAOUDENE", role: "RESPONSABLE" as const, sites: ["ANTIBES"], allowedPages: ["/planning"] },
+  { email: "mzarglayoune@id-logistics.com", name: "Medhi ZARGLAYOUNE", role: "RESPONSABLE" as const, sites: ["RUNGIS", "VITRY", "VLG", "LPP", "CASTRIES", "ANTIBES", "ROSNY", "AIX"], allowedPages: ["/planning"] },
+  { email: "pleblanc@id-logistics.com", name: "Pascal LEBLANC", role: "RESPONSABLE" as const, sites: ["AIX"], allowedPages: ["/planning"] },
+];
 
 async function main(): Promise<void> {
   console.log("Seeding absence codes...");
@@ -78,18 +92,39 @@ async function main(): Promise<void> {
     });
   }
 
-  console.log("Seeding admin user...");
-  const hashedPassword = await hash("admin123", 12);
-  await prisma.user.upsert({
-    where: { email: "sguimaraes@id-logistics.com" },
-    update: {},
-    create: {
-      name: "Administrateur",
-      email: "sguimaraes@id-logistics.com",
-      password: hashedPassword,
-      role: "ADMIN",
-    },
-  });
+  console.log("Seeding users...");
+  const hashedPassword = await hash("Idl2026!", 12);
+
+  const allSites = await prisma.site.findMany();
+  const siteByCode = new Map(allSites.map((s) => [s.code, s.id]));
+
+  for (const u of USERS) {
+    const user = await prisma.user.upsert({
+      where: { email: u.email },
+      update: { name: u.name, role: u.role, allowedPages: u.allowedPages },
+      create: {
+        name: u.name,
+        email: u.email,
+        password: hashedPassword,
+        role: u.role,
+        allowedPages: u.allowedPages,
+      },
+    });
+
+    for (const siteCode of u.sites) {
+      const siteId = siteByCode.get(siteCode);
+      if (!siteId) {
+        console.warn(`  Site ${siteCode} not found, skipping for ${u.email}`);
+        continue;
+      }
+      await prisma.userSite.upsert({
+        where: { userId_siteId: { userId: user.id, siteId } },
+        update: {},
+        create: { userId: user.id, siteId },
+      });
+    }
+    console.log(`  ${u.email} → ${u.role} (${u.sites.join(", ") || "all sites"})`);
+  }
 
   console.log("Seed complete.");
 }

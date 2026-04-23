@@ -66,6 +66,12 @@ interface Site {
   label: string;
 }
 
+interface PosteConfig {
+  id: string;
+  label: string;
+  mealAllowance: number;
+}
+
 interface PlanningData {
   from: string;
   to: string;
@@ -92,6 +98,7 @@ export default function PlanningPage() {
   );
   const [filterCategorie, setFilterCategorie] = useState("");
   const [filterSiteId, setFilterSiteId] = useState("");
+  const [filterPoste, setFilterPoste] = useState("");
   const [editingPopover, setEditingPopover] = useState<{
     employeeId: string;
     date: string;
@@ -142,12 +149,22 @@ export default function PlanningPage() {
     },
   });
 
+  const { data: postes = [] } = useQuery<PosteConfig[]>({
+    queryKey: ["postes"],
+    queryFn: async () => {
+      const res = await fetch("/api/postes");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
+      return res.json();
+    },
+  });
+
   const { data, isLoading } = useQuery<PlanningData>({
-    queryKey: ["planning", fromStr, toStr, filterCategorie, filterSiteId],
+    queryKey: ["planning", fromStr, toStr, filterCategorie, filterSiteId, filterPoste],
     queryFn: async () => {
       const params = new URLSearchParams({ from: fromStr, to: toStr });
       if (filterCategorie) params.set("categorie", filterCategorie);
       if (filterSiteId) params.set("siteId", filterSiteId);
+      if (filterPoste) params.set("poste", filterPoste);
       const res = await fetch(`/api/planning?${params}`);
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
@@ -413,6 +430,18 @@ export default function PlanningPage() {
             {sites.map((site) => (
               <option key={site.id} value={site.id}>
                 {site.code}
+              </option>
+            ))}
+          </select>
+          <select
+            value={filterPoste}
+            onChange={(e) => setFilterPoste(e.target.value)}
+            className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+          >
+            <option value="">Tous les postes</option>
+            {postes.map((poste) => (
+              <option key={poste.id} value={poste.label}>
+                {poste.label}
               </option>
             ))}
           </select>

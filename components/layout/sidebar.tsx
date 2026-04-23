@@ -18,7 +18,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -36,6 +36,12 @@ export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [collapsed, setCollapsed] = useState(false);
+
+  const visibleItems = useMemo(() => {
+    const allowed = session?.user?.allowedPages;
+    if (!allowed || allowed.length === 0) return NAV_ITEMS;
+    return NAV_ITEMS.filter((item) => allowed.some((p) => item.href.startsWith(p)));
+  }, [session?.user?.allowedPages]);
 
   return (
     <aside
@@ -58,7 +64,7 @@ export function Sidebar() {
       </div>
 
       <nav className="flex-1 space-y-0.5 overflow-y-auto p-2">
-        {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+        {visibleItems.map(({ href, label, icon: Icon }) => {
           const isActive = pathname.startsWith(href);
           return (
             <Link
