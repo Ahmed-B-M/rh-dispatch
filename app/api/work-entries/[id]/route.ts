@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth } from "@/lib/auth";
+import { requireAuth, assertEmployeeInScope } from "@/lib/auth";
 import { workEntryUpdateSchema } from "@/lib/validations";
 import { computeWorkDuration } from "@/lib/time-utils";
 
@@ -20,6 +20,8 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
       return NextResponse.json({ error: "Entrée non trouvée" }, { status: 404 });
     }
 
+    await assertEmployeeInScope(session, existing.employeeId);
+
     const heureDebut = data.heureDebut !== undefined ? data.heureDebut : existing.heureDebut;
     const heureFin = data.heureFin !== undefined ? data.heureFin : existing.heureFin;
 
@@ -27,7 +29,10 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
     let heuresDecimales = existing.heuresDecimales ? Number(existing.heuresDecimales) : null;
 
     if (heureDebut && heureFin) {
-      const result = computeWorkDuration(heureDebut, heureFin);
+      const posteConfig = await prisma.posteConfig.findUnique({
+        where: { label: existing.posteOccupe ?? "" },
+      }).catch(() => null);
+      const result = computeWorkDuration(heureDebut, heureFin, posteConfig?.pauseMinutes ?? 0);
       tempsTravail = result.time;
       heuresDecimales = result.decimal;
     } else {

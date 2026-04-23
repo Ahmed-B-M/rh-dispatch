@@ -128,3 +128,32 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  /* Hide navigation, filters, buttons */
+  nav, aside, header,
+  [data-print-hide],
+  .no-print { display: none !important; }
+
+  /* Full width content */
+  main { padding: 0 !important; }
+
+  /* Page setup */
+  @page { size: A4 landscape; margin: 1.5cm; }
+
+  body { font-size: 11px; }
+
+  /* Table fits on page */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { padding: 4px 6px; border: 1px solid #e2e8f0; }
+
+  /* Force background colors for status badges */
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Page break */
+  .page-break { page-break-before: always; }
+
+  /* Hide shadows and rounded corners */
+  .shadow-soft, .shadow-elevated { box-shadow: none !important; }
+  .rounded-xl, .rounded-lg { border-radius: 0 !important; }
+}

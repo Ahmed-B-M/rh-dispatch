@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth";
 import { workEntryBulkSchema } from "@/lib/validations";
 import { computeWorkDuration, getDayNameFr, getWeekNumber } from "@/lib/time-utils";
+import type { Prisma } from "@prisma/client";
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
@@ -23,8 +24,20 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     const posteMap = new Map(posteConfigs.map((p) => [p.label, p.pauseMinutes]));
 
-    let created = 0;
-    let updated = 0;
+    // Normalize incoming entries to a filtered, enriched list in a single pass.
+    // Each normalized entry carries its computed Date object and the composite key
+    // used to join against the pre-loaded existing rows.
+    type NormalizedEntry = {
+      key: string;
+      date: Date;
+      tempsTravail: string | null;
+      heuresDecimales: number | null;
+      input: (typeof entries)[number];
+      employee: (typeof employees)[number];
+    };
+
+    const normalized: NormalizedEntry[] = [];
+    const datesSet = new Set<number>();
 
     for (const entry of entries) {
       const employee = employeeMap.get(entry.employeeId);
@@ -41,53 +54,105 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
         heuresDecimales = result.decimal;
       }
 
-      const existing = await prisma.workEntry.findUnique({
-        where: { employeeId_date: { employeeId: entry.employeeId, date } },
+      datesSet.add(date.getTime());
+      normalized.push({
+        key: `${entry.employeeId}|${date.toISOString()}`,
+        date,
+        tempsTravail,
+        heuresDecimales,
+        input: entry,
+        employee,
       });
+    }
 
-      if (existing) {
-        await prisma.workEntry.update({
-          where: { id: existing.id },
+    // Single query to fetch all already-existing rows for the (employees, dates) set.
+    // Avoids the previous N x findUnique pattern.
+    const targetEmployeeIds = [...new Set(normalized.map((n) => n.input.employeeId))];
+    const targetDates = [...datesSet].map((t) => new Date(t));
+
+    const existingEntries =
+      normalized.length === 0
+        ? []
+        : await prisma.workEntry.findMany({
+            where: {
+              employeeId: { in: targetEmployeeIds },
+              date: { in: targetDates },
+            },
+            select: { id: true, employeeId: true, date: true },
+          });
+
+    const existingMap = new Map<string, string>();
+    for (const row of existingEntries) {
+      existingMap.set(`${row.employeeId}|${row.date.toISOString()}`, row.id);
+    }
+
+    // Split into createMany payload and individual updates.
+    const toCreate: Prisma.WorkEntryCreateManyInput[] = [];
+    const toUpdate: { id: string; data: Prisma.WorkEntryUncheckedUpdateInput }[] = [];
+
+    for (const n of normalized) {
+      const existingId = existingMap.get(n.key);
+      if (existingId) {
+        toUpdate.push({
+          id: existingId,
           data: {
-            absenceCodeId: entry.absenceCodeId ?? null,
-            heureDebut: entry.heureDebut ?? null,
-            heureFin: entry.heureFin ?? null,
-            tempsTravail,
-            heuresDecimales,
-            vehicleId: entry.vehicleId ?? null,
-            typeRoute: entry.typeRoute ?? null,
-            nbKm: entry.nbKm ?? null,
+            absenceCodeId: n.input.absenceCodeId ?? null,
+            heureDebut: n.input.heureDebut ?? null,
+            heureFin: n.input.heureFin ?? null,
+            tempsTravail: n.tempsTravail,
+            heuresDecimales: n.heuresDecimales,
+            vehicleId: n.input.vehicleId ?? null,
+            typeRoute: n.input.typeRoute ?? null,
+            nbKm: n.input.nbKm ?? null,
             updatedBy: session.user.id,
           },
         });
-        updated++;
       } else {
-        await prisma.workEntry.create({
-          data: {
-            employeeId: entry.employeeId,
-            date,
-            weekNumber: getWeekNumber(date),
-            dayName: getDayNameFr(date),
-            affectation: employee.affectationCode,
-            typeContrat: employee.typeContrat,
-            matricule: employee.matricule,
-            nomConducteur: `${employee.nom} ${employee.prenom}`,
-            posteOccupe: employee.poste,
-            absenceCodeId: entry.absenceCodeId ?? null,
-            heureDebut: entry.heureDebut ?? null,
-            heureFin: entry.heureFin ?? null,
-            tempsTravail,
-            heuresDecimales,
-            vehicleId: entry.vehicleId ?? null,
-            typeRoute: entry.typeRoute ?? null,
-            nbKm: entry.nbKm ?? null,
-            source: "MANUAL",
-            updatedBy: session.user.id,
-          },
+        toCreate.push({
+          employeeId: n.input.employeeId,
+          date: n.date,
+          weekNumber: getWeekNumber(n.date),
+          dayName: getDayNameFr(n.date),
+          affectation: n.employee.affectationCode,
+          typeContrat: n.employee.typeContrat,
+          matricule: n.employee.matricule,
+          nomConducteur: `${n.employee.nom} ${n.employee.prenom}`,
+          posteOccupe: n.employee.poste,
+          absenceCodeId: n.input.absenceCodeId ?? null,
+          heureDebut: n.input.heureDebut ?? null,
+          heureFin: n.input.heureFin ?? null,
+          tempsTravail: n.tempsTravail,
+          heuresDecimales: n.heuresDecimales,
+          vehicleId: n.input.vehicleId ?? null,
+          typeRoute: n.input.typeRoute ?? null,
+          nbKm: n.input.nbKm ?? null,
+          source: "MANUAL",
+          updatedBy: session.user.id,
         });
-        created++;
       }
     }
+
+    // Execute all writes inside a single transaction. createMany groups inserts
+    // in one round-trip; updates remain per-row (different columns per row) but
+    // benefit from shared connection + atomicity.
+    const operations: Prisma.PrismaPromise<unknown>[] = [];
+    if (toCreate.length > 0) {
+      operations.push(
+        prisma.workEntry.createMany({ data: toCreate, skipDuplicates: true }),
+      );
+    }
+    for (const u of toUpdate) {
+      operations.push(
+        prisma.workEntry.update({ where: { id: u.id }, data: u.data }),
+      );
+    }
+
+    if (operations.length > 0) {
+      await prisma.$transaction(operations);
+    }
+
+    const created = toCreate.length;
+    const updated = toUpdate.length;
 
     return NextResponse.json({ created, updated, total: created + updated });
   } catch (err) {

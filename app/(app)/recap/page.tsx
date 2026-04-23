@@ -9,6 +9,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
+  Printer,
   Moon,
   Clock,
   Utensils,
@@ -184,7 +185,7 @@ function RecapContent() {
   return (
     <div className="flex h-full flex-col space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between" data-print-hide>
         <div className="flex items-center gap-2">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Récap mensuel</h1>
@@ -224,17 +225,26 @@ function RecapContent() {
             ]}
           />
         </div>
-        <button
-          onClick={handleExport}
-          className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
-        >
-          <Download className="h-4 w-4" />
-          Exporter
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => window.print()}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+          >
+            <Printer className="h-4 w-4" />
+            Imprimer
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700"
+          >
+            <Download className="h-4 w-4" />
+            Exporter
+          </button>
+        </div>
       </div>
 
       {/* Month navigator + filters */}
-      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+      <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-soft" data-print-hide>
         <div className="flex items-center gap-2">
           <button
             onClick={prevMonth}

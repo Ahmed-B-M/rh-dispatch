@@ -21,10 +21,9 @@ export const authOptions: NextAuthOptions = {
         });
         if (!user?.password) return null;
 
-        const isBcrypt = user.password.startsWith("$2");
-        const isValid = isBcrypt
+        const isValid = user.password.startsWith("$2")
           ? await compare(credentials.password, user.password)
-          : credentials.password === user.password;
+          : false;
 
         if (!isValid) return null;
 

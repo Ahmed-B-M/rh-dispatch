@@ -29,6 +29,19 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       employeeWhere.categorie = categorie;
     }
 
+    // Performance note: this endpoint intentionally keeps a nested `entries`
+    // include rather than a `workEntry.groupBy` aggregation.
+    //
+    // Reason: per-row night-hours calculation requires `nightHoursOverlap` over
+    // the pair (heureDebut, heureFin), which cannot be expressed in SQL without
+    // pushing a custom function. A groupBy would therefore still need a second
+    // pass fetching the raw heureDebut/heureFin pairs, negating the savings and
+    // adding complexity. Prisma issues a single JOIN for this query (no N+1 at
+    // the SQL layer), so the current shape is acceptable.
+    //
+    // If this endpoint becomes a bottleneck, consider:
+    //   1. A persisted `heuresNuit` column computed at write-time.
+    //   2. A raw SQL query with a stored procedure or CTE doing the overlap math.
     const employees = await prisma.employee.findMany({
       where: employeeWhere,
       orderBy: [{ nom: "asc" }, { prenom: "asc" }],

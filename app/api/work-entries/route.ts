@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, getAllowedSiteIds, assertEmployeeInScope } from "@/lib/auth";
 import { workEntryCreateSchema } from "@/lib/validations";
 import { computeWorkDuration, getDayNameFr, getWeekNumber } from "@/lib/time-utils";
 
@@ -105,6 +105,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     if (!employee) {
       return NextResponse.json({ error: "Employé non trouvé" }, { status: 404 });
     }
+
+    await assertEmployeeInScope(session, data.employeeId);
 
     const posteConfig = await prisma.posteConfig.findUnique({ where: { label: employee.poste } }).catch(() => null);
     const pauseMinutes = posteConfig?.pauseMinutes ?? 0;

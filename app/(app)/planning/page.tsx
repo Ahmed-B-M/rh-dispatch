@@ -1,7 +1,8 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo, useRef, useEffect, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
@@ -123,16 +124,50 @@ function computeDurationDecimal(start: string, end: string): number | null {
 }
 
 export default function PlanningPage() {
-  const queryClient = useQueryClient();
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><p className="text-sm text-slate-400">Chargement…</p></div>}>
+      <PlanningContent />
+    </Suspense>
+  );
+}
 
+function PlanningContent() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // --- URL-persisted filters ---
+  const filterCategorie = searchParams.get("categorie") ?? "";
+  const filterSiteId = searchParams.get("siteId") ?? "";
+  const filterPostes = searchParams.get("postes")?.split(",").filter(Boolean) ?? [];
+  const searchQuery = searchParams.get("q") ?? "";
+  const showWeekend = searchParams.get("weekend") !== "false";
+  const compact = searchParams.get("compact") === "true";
+
+  const updateFilters = useCallback(
+    (patch: Record<string, string | null>) => {
+      const params = new URLSearchParams(searchParams.toString());
+      Object.entries(patch).forEach(([key, value]) => {
+        if (value === null || value === "") {
+          params.delete(key);
+        } else {
+          params.set(key, value);
+        }
+      });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    },
+    [searchParams, router, pathname],
+  );
+
+  // Debounce ref for searchQuery URL update
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // --- Ephemeral state (not persisted in URL) ---
   const [weekStart, setWeekStart] = useState(() =>
     startOfWeek(new Date(), { weekStartsOn: 1 }),
   );
-  const [filterCategorie, setFilterCategorie] = useState("");
-  const [filterSiteId, setFilterSiteId] = useState("");
-  const [filterPostes, setFilterPostes] = useState<string[]>([]);
   const [showPosteDropdown, setShowPosteDropdown] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const [editingPopover, setEditingPopover] = useState<EditingPopover>(null);
   const [popoverData, setPopoverData] = useState({
@@ -159,8 +194,8 @@ export default function PlanningPage() {
     heureFin: string | null;
   }> | null>(null);
   const [isImportingPrev, setIsImportingPrev] = useState(false);
-  const [showWeekend, setShowWeekend] = useState(true);
-  const [compact, setCompact] = useState(false);
+  // Local state for search input (debounced to URL)
+  const [searchInputValue, setSearchInputValue] = useState(searchQuery);
 
   // Drag-to-select refs (mutable, no re-render needed)
   const hasDraggedRef = useRef(false);
@@ -716,9 +751,10 @@ export default function PlanningPage() {
   }
 
   function togglePosteFilter(label: string) {
-    setFilterPostes((prev) =>
-      prev.includes(label) ? prev.filter((p) => p !== label) : [...prev, label],
-    );
+    const newPostes = filterPostes.includes(label)
+      ? filterPostes.filter((p) => p !== label)
+      : [...filterPostes, label];
+    updateFilters({ postes: newPostes.join(",") || null });
   }
 
   function toggleEmployeeSelection(empId: string) {
@@ -875,8 +911,15 @@ export default function PlanningPage() {
           <input
             type="text"
             placeholder="Rechercher un employé…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={searchInputValue}
+            onChange={(e) => {
+              const value = e.target.value;
+              setSearchInputValue(value);
+              if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+              searchDebounceRef.current = setTimeout(() => {
+                updateFilters({ q: value || null });
+              }, 300);
+            }}
             className="h-9 w-52 rounded-lg border border-slate-200 pl-8 pr-3 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
           />
         </div>
@@ -884,7 +927,7 @@ export default function PlanningPage() {
         {/* Catégorie */}
         <select
           value={filterCategorie}
-          onChange={(e) => setFilterCategorie(e.target.value)}
+          onChange={(e) => updateFilters({ categorie: e.target.value || null })}
           className="h-9 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-primary-500"
         >
           <option value="">Toutes catégories</option>
@@ -896,7 +939,7 @@ export default function PlanningPage() {
         {/* Site */}
         <select
           value={filterSiteId}
-          onChange={(e) => setFilterSiteId(e.target.value)}
+          onChange={(e) => updateFilters({ siteId: e.target.value || null })}
           className="h-9 rounded-lg border border-slate-200 px-3 text-sm outline-none focus:border-primary-500"
         >
           <option value="">Tous les sites</option>
@@ -928,7 +971,7 @@ export default function PlanningPage() {
           {showPosteDropdown && (
             <div className="absolute right-0 top-full z-30 mt-1 w-64 rounded-xl border border-slate-200 bg-white py-1 shadow-elevated">
               <button
-                onClick={() => setFilterPostes([])}
+                onClick={() => updateFilters({ postes: null })}
                 className={cn(
                   "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50",
                   filterPostes.length === 0 && "text-primary-600 font-medium",
@@ -1059,7 +1102,7 @@ export default function PlanningPage() {
         <div className="ml-auto flex items-center gap-1.5">
           {/* Weekend toggle */}
           <button
-            onClick={() => setShowWeekend((v) => !v)}
+            onClick={() => updateFilters({ weekend: showWeekend ? "false" : null })}
             title={showWeekend ? "Masquer samedi/dimanche" : "Afficher samedi/dimanche"}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
@@ -1072,7 +1115,7 @@ export default function PlanningPage() {
           </button>
           {/* Compact view toggle */}
           <button
-            onClick={() => setCompact((v) => !v)}
+            onClick={() => updateFilters({ compact: compact ? null : "true" })}
             title={compact ? "Vue normale" : "Vue compacte"}
             className={cn(
               "rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors",
