@@ -32,4 +32,4 @@ networks:
     external: true
   supabase:
     external: true
-    name: docker_default
+    name: supabase_default
