@@ -66,6 +66,7 @@ export default function PlanningPage() {
     queryKey: ["absenceCodes"],
     queryFn: async () => {
       const res = await fetch("/api/absence-codes");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });
@@ -79,6 +80,7 @@ export default function PlanningPage() {
       });
       if (filterCategorie) params.set("categorie", filterCategorie);
       const res = await fetch(`/api/planning?${params}`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });

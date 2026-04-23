@@ -39,6 +39,7 @@ export default function ModifierEmployePage() {
     queryKey: ["employee", id],
     queryFn: async () => {
       const res = await fetch(`/api/employees/${id}`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });
@@ -47,6 +48,7 @@ export default function ModifierEmployePage() {
     queryKey: ["sites"],
     queryFn: async () => {
       const res = await fetch("/api/sites");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });

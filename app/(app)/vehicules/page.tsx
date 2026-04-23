@@ -22,6 +22,7 @@ export default function VehiculesPage() {
     queryKey: ["vehicles"],
     queryFn: async () => {
       const res = await fetch("/api/vehicles");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });

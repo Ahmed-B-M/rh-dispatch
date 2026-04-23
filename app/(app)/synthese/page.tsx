@@ -70,6 +70,7 @@ export default function SynthesePage() {
     queryKey: ["absenceCodes"],
     queryFn: async () => {
       const res = await fetch("/api/absence-codes");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });
@@ -90,6 +91,7 @@ export default function SynthesePage() {
       });
       if (search) params.set("search", search);
       const res = await fetch(`/api/work-entries?${params}`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });

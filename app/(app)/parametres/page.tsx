@@ -47,6 +47,7 @@ export default function ParametresPage() {
     queryKey: ["sites"],
     queryFn: async () => {
       const res = await fetch("/api/sites");
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });

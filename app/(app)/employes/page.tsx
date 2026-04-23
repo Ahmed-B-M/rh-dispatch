@@ -36,6 +36,7 @@ export default function EmployesPage() {
       if (!showInactive) params.set("active", "true");
       if (filterCategorie) params.set("categorie", filterCategorie);
       const res = await fetch(`/api/employees?${params}`);
+      if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
   });
