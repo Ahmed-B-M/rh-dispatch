@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import {
@@ -73,6 +73,14 @@ const contratColors: Record<string, string> = {
 };
 
 export default function RecapPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center py-20"><p className="text-sm text-slate-400">Chargement...</p></div>}>
+      <RecapContent />
+    </Suspense>
+  );
+}
+
+function RecapContent() {
   const searchParams = useSearchParams();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
