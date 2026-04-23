@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { Plus, Shield, UserPlus, Trash2, Briefcase, Pencil, Check, X } from "lucide-react";
+import { PageHelp } from "@/components/ui/page-help";
 import { toast } from "sonner";
 
 interface UserItem {
@@ -24,6 +25,7 @@ interface PosteConfig {
   id: string;
   label: string;
   mealAllowance: number;
+  pauseMinutes: number;
   isActive: boolean;
 }
 
@@ -42,9 +44,9 @@ export default function ParametresPage() {
   });
 
   const [showPosteForm, setShowPosteForm] = useState(false);
-  const [newPoste, setNewPoste] = useState({ label: "", mealAllowance: "" });
+  const [newPoste, setNewPoste] = useState({ label: "", mealAllowance: "", pauseMinutes: "" });
   const [editingPosteId, setEditingPosteId] = useState<string | null>(null);
-  const [editPoste, setEditPoste] = useState({ label: "", mealAllowance: "" });
+  const [editPoste, setEditPoste] = useState({ label: "", mealAllowance: "", pauseMinutes: "" });
   const [deletePosteConfirm, setDeletePosteConfirm] = useState<PosteConfig | null>(null);
 
   const { data: users = [] } = useQuery<UserItem[]>({
@@ -102,6 +104,7 @@ export default function ParametresPage() {
         body: JSON.stringify({
           label: newPoste.label,
           mealAllowance: parseFloat(newPoste.mealAllowance) || 0,
+          pauseMinutes: parseInt(newPoste.pauseMinutes, 10) || 0,
         }),
       });
       if (!res.ok) {
@@ -112,7 +115,7 @@ export default function ParametresPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["postes"] });
-      setNewPoste({ label: "", mealAllowance: "" });
+      setNewPoste({ label: "", mealAllowance: "", pauseMinutes: "" });
       setShowPosteForm(false);
       toast.success("Poste créé");
     },
@@ -120,11 +123,11 @@ export default function ParametresPage() {
   });
 
   const updatePosteMutation = useMutation({
-    mutationFn: async ({ id, label, mealAllowance }: { id: string; label: string; mealAllowance: number }) => {
+    mutationFn: async ({ id, label, mealAllowance, pauseMinutes }: { id: string; label: string; mealAllowance: number; pauseMinutes: number }) => {
       const res = await fetch(`/api/postes/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label, mealAllowance }),
+        body: JSON.stringify({ label, mealAllowance, pauseMinutes }),
       });
       if (!res.ok) throw new Error("Erreur de modification");
       return res.json();
@@ -161,11 +164,38 @@ export default function ParametresPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
-        <p className="text-sm text-slate-500">
-          Gestion des postes, paniers repas et utilisateurs
-        </p>
+      <div className="flex items-center gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Paramètres</h1>
+          <p className="text-sm text-slate-500">
+            Gestion des postes, paniers repas et utilisateurs
+          </p>
+        </div>
+        <PageHelp
+          title="Paramètres"
+          description="Configuration des postes, indemnités et accès utilisateurs."
+          sections={[
+            {
+              title: "Postes & Paniers repas",
+              items: [
+                "Chaque poste a un montant de panier repas journalier associé.",
+                "Ces montants sont utilisés dans le calcul du Récap mensuel.",
+                "Le temps de pause (en minutes) est déduit automatiquement des heures travaillées pour ce poste.",
+                "Laissez la pause à 0 si le poste n'a pas de coupure réglementaire.",
+                "Modifiez ou désactivez un poste sans perdre l'historique.",
+              ],
+            },
+            {
+              title: "Utilisateurs (admin uniquement)",
+              items: [
+                "Créez des comptes avec le rôle ADMIN ou RESPONSABLE.",
+                "Un responsable ne voit que les données des sites qui lui sont assignés.",
+                "Modifiez les sites autorisés d'un utilisateur via l'icône crayon.",
+                "La suppression d'un utilisateur est irréversible.",
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Postes section — visible to all authenticated users */}
@@ -212,7 +242,21 @@ export default function ParametresPage() {
                 }
                 className="w-24 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
               />
-              <span className="text-xs text-slate-400">€/jour</span>
+              <span className="text-xs text-slate-400">€/j</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <input
+                type="number"
+                step="1"
+                min="0"
+                placeholder="0"
+                value={newPoste.pauseMinutes}
+                onChange={(e) =>
+                  setNewPoste((p) => ({ ...p, pauseMinutes: e.target.value }))
+                }
+                className="w-20 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
+              />
+              <span className="text-xs text-slate-400">min pause</span>
             </div>
             <button
               onClick={() => createPosteMutation.mutate()}
@@ -256,13 +300,29 @@ export default function ParametresPage() {
                     />
                     <span className="text-xs text-slate-400">€/j</span>
                   </div>
+                  <div className="flex items-center gap-1">
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={editPoste.pauseMinutes}
+                      onChange={(e) =>
+                        setEditPoste((p) => ({
+                          ...p,
+                          pauseMinutes: e.target.value,
+                        }))
+                      }
+                      className="w-20 rounded border border-primary-300 px-2 py-1 text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+                    />
+                    <span className="text-xs text-slate-400">min</span>
+                  </div>
                   <button
                     onClick={() =>
                       updatePosteMutation.mutate({
                         id: poste.id,
                         label: editPoste.label,
-                        mealAllowance:
-                          parseFloat(editPoste.mealAllowance) || 0,
+                        mealAllowance: parseFloat(editPoste.mealAllowance) || 0,
+                        pauseMinutes: parseInt(editPoste.pauseMinutes, 10) || 0,
                       })
                     }
                     className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50"
@@ -284,18 +344,25 @@ export default function ParametresPage() {
                     </p>
                     <p className="text-xs text-slate-400">
                       Panier repas : {Number(poste.mealAllowance).toFixed(2)} €/jour
+                      {(poste.pauseMinutes ?? 0) > 0 && ` · Pause : ${poste.pauseMinutes} min`}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-700">
                       {Number(poste.mealAllowance).toFixed(2)} €
                     </span>
+                    {(poste.pauseMinutes ?? 0) > 0 && (
+                      <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600">
+                        {poste.pauseMinutes} min pause
+                      </span>
+                    )}
                     <button
                       onClick={() => {
                         setEditingPosteId(poste.id);
                         setEditPoste({
                           label: poste.label,
                           mealAllowance: String(poste.mealAllowance),
+                          pauseMinutes: String(poste.pauseMinutes ?? 0),
                         });
                       }}
                       className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"

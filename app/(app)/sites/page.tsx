@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, MapPin, Trash2, Users, Pencil, X, Check } from "lucide-react";
+import { PageHelp } from "@/components/ui/page-help";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -104,9 +105,33 @@ export default function SitesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Sites</h1>
-          <p className="text-sm text-slate-500">{sites.length} site(s)</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Sites</h1>
+            <p className="text-sm text-slate-500">{sites.length} site(s)</p>
+          </div>
+          <PageHelp
+            title="Sites"
+            description="Référentiel des sites logistiques de l'entreprise."
+            sections={[
+              {
+                title: "Utilisation",
+                items: [
+                  "Les sites sont utilisés pour filtrer le planning et les rapports.",
+                  "Chaque employé est rattaché à un ou plusieurs sites.",
+                  "Le compteur indique le nombre d'employés actifs rattachés au site.",
+                ],
+              },
+              {
+                title: "Gestion",
+                items: [
+                  "Créez un site avec un code court (ex : RUNGIS) et un libellé complet.",
+                  "Modifiez le libellé ou le code d'un site existant via l'icône crayon.",
+                  "Un site avec des employés ne peut pas être supprimé.",
+                ],
+              },
+            ]}
+          />
         </div>
         {canManage && (
           <button

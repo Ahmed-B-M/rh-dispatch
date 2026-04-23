@@ -5,6 +5,7 @@ import { useState, useCallback, useRef } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Download, Search, Filter, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHelp } from "@/components/ui/page-help";
 import { toast } from "sonner";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -194,11 +195,42 @@ export default function SynthesePage() {
   return (
     <div className="flex h-full flex-col space-y-4">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Synthèse</h1>
-          <p className="text-sm text-slate-500">
-            {total.toLocaleString("fr-FR")} entrée(s) — {rows.length} affichée(s)
-          </p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Synthèse</h1>
+            <p className="text-sm text-slate-500">
+              {total.toLocaleString("fr-FR")} entrée(s) — {rows.length} affichée(s)
+            </p>
+          </div>
+          <PageHelp
+            title="Synthèse"
+            description="Vue tabulaire de toutes les entrées de travail, filtrable et exportable."
+            sections={[
+              {
+                title: "Filtres",
+                items: [
+                  "Filtrez par période (mois), site, catégorie, matricule ou nom.",
+                  "Le filtre « Poste occupé » restreint aux entrées d'un poste précis.",
+                  "Les résultats se mettent à jour à chaque changement de filtre.",
+                ],
+              },
+              {
+                title: "Tableau",
+                items: [
+                  "Chaque ligne représente une entrée journalière pour un employé.",
+                  "La virtualisation permet d'afficher des milliers de lignes sans ralentissement.",
+                  "Les heures affichées sont nettes de la pause configurée par poste dans Paramètres.",
+                  "Modification inline : cliquez sur une cellule Absence, Début ou Fin pour la modifier.",
+                ],
+              },
+              {
+                title: "Export",
+                items: [
+                  "Le bouton « Exporter Excel » exporte toutes les données filtrées.",
+                ],
+              },
+            ]}
+          />
         </div>
         <button
           onClick={handleExport}

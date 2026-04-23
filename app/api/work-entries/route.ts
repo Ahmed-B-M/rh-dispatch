@@ -101,19 +101,19 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const body = await req.json();
     const data = workEntryCreateSchema.parse(body);
 
-    const employee = await prisma.employee.findUnique({
-      where: { id: data.employeeId },
-    });
+    const employee = await prisma.employee.findUnique({ where: { id: data.employeeId } });
     if (!employee) {
       return NextResponse.json({ error: "Employé non trouvé" }, { status: 404 });
     }
 
+    const posteConfig = await prisma.posteConfig.findUnique({ where: { label: employee.poste } }).catch(() => null);
+    const pauseMinutes = posteConfig?.pauseMinutes ?? 0;
     const date = new Date(data.date);
     let tempsTravail: string | null = null;
     let heuresDecimales: number | null = null;
 
     if (data.heureDebut && data.heureFin) {
-      const result = computeWorkDuration(data.heureDebut, data.heureFin);
+      const result = computeWorkDuration(data.heureDebut, data.heureFin, pauseMinutes);
       tempsTravail = result.time;
       heuresDecimales = result.decimal;
     }

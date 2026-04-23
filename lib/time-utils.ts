@@ -16,10 +16,10 @@ export function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
-export function computeWorkDuration(start: string, end: string): { time: string; decimal: number } {
+export function computeWorkDuration(start: string, end: string, pauseMinutes = 0): { time: string; decimal: number } {
   const startMin = timeToMinutes(start);
   const endMin = timeToMinutes(end);
-  const diff = endMin - startMin;
+  const diff = Math.max(0, endMin - startMin - pauseMinutes);
   if (diff <= 0) return { time: "00:00:00", decimal: 0 };
   const hours = Math.floor(diff / 60);
   const mins = diff % 60;

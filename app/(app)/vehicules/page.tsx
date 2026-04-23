@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Plus, Truck, Trash2, Pencil, X, Check } from "lucide-react";
+import { PageHelp } from "@/components/ui/page-help";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
@@ -88,11 +89,33 @@ export default function VehiculesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Véhicules</h1>
-          <p className="text-sm text-slate-500">
-            {vehicles.length} véhicule(s)
-          </p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Véhicules</h1>
+            <p className="text-sm text-slate-500">{vehicles.length} véhicule(s)</p>
+          </div>
+          <PageHelp
+            title="Véhicules"
+            description="Gestion du parc véhicules associé aux entrées de travail."
+            sections={[
+              {
+                title: "Utilisation",
+                items: [
+                  "Chaque véhicule est référencé par sa plaque d'immatriculation.",
+                  "Les véhicules actifs peuvent être associés à des entrées dans la Synthèse.",
+                  "Désactivez un véhicule pour le retirer de la liste de sélection sans supprimer l'historique.",
+                ],
+              },
+              {
+                title: "Gestion (admin/responsable)",
+                items: [
+                  "Ajoutez un véhicule via le champ « Immatriculation » puis validez.",
+                  "Cliquez sur l'icône crayon pour modifier une immatriculation.",
+                  "La suppression est bloquée si le véhicule a des entrées associées.",
+                ],
+              },
+            ]}
+          />
         </div>
         {canManage && (
           <button

@@ -10,13 +10,14 @@ datasource db {
 // --- REFERENCE DATA ---
 
 model AbsenceCode {
-  id        String      @id @default(cuid())
-  code      String      @unique
-  label     String
-  color     String
-  isWork    Boolean     @default(false)
-  sortOrder Int         @default(0)
-  entries   WorkEntry[]
+  id                 String      @id @default(cuid())
+  code               String      @unique
+  label              String
+  color              String
+  isWork             Boolean     @default(false)
+  isWeekendInclusive Boolean     @default(false)
+  sortOrder          Int         @default(0)
+  entries            WorkEntry[]
 }
 
 model Site {
@@ -42,6 +43,7 @@ model PosteConfig {
   id            String   @id @default(cuid())
   label         String   @unique
   mealAllowance Decimal  @default(0) @db.Decimal(6, 2)
+  pauseMinutes  Int      @default(0)
   isActive      Boolean  @default(true)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt

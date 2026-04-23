@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { Upload, FileSpreadsheet, Check, AlertTriangle, Loader2 } from "lucide-react";
+import { PageHelp } from "@/components/ui/page-help";
 
 type Step = "upload" | "preview" | "result";
 
@@ -107,11 +108,42 @@ export default function ImportPage() {
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900">Import Excel</h1>
-        <p className="text-sm text-slate-500">
-          Importez les fichiers HEURES Excel pour alimenter la base de données
-        </p>
+      <div className="flex items-center gap-2">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Import Excel</h1>
+          <p className="text-sm text-slate-500">
+            Importez les fichiers HEURES Excel pour alimenter la base de données
+          </p>
+        </div>
+        <PageHelp
+          title="Import Excel"
+          description="Importation des fichiers HEURES au format Excel pour alimenter le planning."
+          sections={[
+            {
+              title: "Étapes d'import",
+              items: [
+                "1. Sélectionnez la source et la catégorie correspondant au fichier Excel.",
+                "2. Glissez-déposez ou parcourez pour choisir votre fichier .xlsx.",
+                "3. Vérifiez l'aperçu : nombre d'employés, entrées et mois détectés.",
+                "4. Cliquez « Importer » pour confirmer l'intégration en base.",
+              ],
+            },
+            {
+              title: "Sources disponibles",
+              items: [
+                "HEURES ROSNY / VITRY / VLG… : fichiers hebdomadaires par site.",
+                "Chaque source a un format Excel spécifique — veillez à choisir la bonne.",
+              ],
+            },
+            {
+              title: "En cas d'erreur",
+              items: [
+                "Les erreurs de format sont affichées avant import — aucune donnée n'est modifiée.",
+                "Les entrées existantes sont mises à jour (upsert), pas dupliquées.",
+              ],
+            },
+          ]}
+        />
       </div>
 
       {/* Step indicator */}

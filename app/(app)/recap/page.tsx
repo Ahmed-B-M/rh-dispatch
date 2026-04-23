@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { PageHelp } from "@/components/ui/page-help";
 import {
   ChevronLeft,
   ChevronRight,
@@ -184,11 +185,44 @@ function RecapContent() {
     <div className="flex h-full flex-col space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Récap mensuel</h1>
-          <p className="text-sm text-slate-500">
-            Synthèse par salarié — {rows.length}{search ? ` / ${rawRows.length}` : ""} employé{rows.length > 1 ? "s" : ""}
-          </p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Récap mensuel</h1>
+            <p className="text-sm text-slate-500">
+              Synthèse par salarié — {rows.length}{search ? ` / ${rawRows.length}` : ""} employé{rows.length > 1 ? "s" : ""}
+            </p>
+          </div>
+          <PageHelp
+            title="Récap mensuel"
+            description="Synthèse par salarié de toutes les heures et indemnités du mois."
+            sections={[
+              {
+                title: "Lecture du tableau",
+                items: [
+                  "Chaque ligne = un employé avec ses totaux du mois sélectionné.",
+                  "Jours travaillés, heures totales, heures nuit, repas et km.",
+                  "Les heures travaillées sont nettes de la pause configurée par poste dans Paramètres.",
+                  "Cliquez sur un nom pour accéder à la fiche détaillée de l'employé.",
+                ],
+              },
+              {
+                title: "Filtres et navigation",
+                items: [
+                  "Naviguez entre les mois avec les flèches ← →.",
+                  "Filtrez par catégorie, site ou poste.",
+                  "La recherche filtre les lignes par nom ou matricule en temps réel.",
+                  "Cliquez sur un en-tête de colonne pour trier.",
+                ],
+              },
+              {
+                title: "Export",
+                items: [
+                  "Le bouton « Exporter » génère un fichier Excel du récap affiché.",
+                  "Appliquez d'abord vos filtres pour n'exporter que les données souhaitées.",
+                ],
+              },
+            ]}
+          />
         </div>
         <button
           onClick={handleExport}

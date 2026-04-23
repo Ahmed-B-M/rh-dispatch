@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Search, Filter } from "lucide-react";
+import { PageHelp } from "@/components/ui/page-help";
 import { cn, formatDate } from "@/lib/utils";
 import { useSession } from "next-auth/react";
 
@@ -61,9 +62,34 @@ export default function EmployesPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Employés</h1>
-          <p className="text-sm text-slate-500">{employees.length} employé(s) trouvé(s)</p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Employés</h1>
+            <p className="text-sm text-slate-500">{employees.length} employé(s) trouvé(s)</p>
+          </div>
+          <PageHelp
+            title="Employés"
+            description="Liste et gestion des fiches employés."
+            sections={[
+              {
+                title: "Consultation",
+                items: [
+                  "Recherchez par nom, prénom ou matricule.",
+                  "Filtrez par catégorie (Transport, Logistique, Sédentaire) ou site.",
+                  "Activez « Inactifs » pour afficher les employés sortis.",
+                  "Cliquez sur une ligne pour ouvrir la fiche complète.",
+                ],
+              },
+              {
+                title: "Gestion (admin/responsable)",
+                items: [
+                  "Bouton « + Nouvel employé » pour créer une fiche.",
+                  "Depuis la fiche : modifier les informations ou désactiver l'employé.",
+                  "Un employé désactivé n'apparaît plus dans le planning mais ses données sont conservées.",
+                ],
+              },
+            ]}
+          />
         </div>
         {canManage && (
           <Link

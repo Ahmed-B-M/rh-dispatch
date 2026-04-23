@@ -16,6 +16,13 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     });
     const employeeMap = new Map(employees.map((e) => [e.id, e]));
 
+    const uniquePostes = [...new Set(employees.map((e) => e.poste).filter(Boolean))];
+    const posteConfigs = await prisma.posteConfig.findMany({
+      where: { label: { in: uniquePostes } },
+      select: { label: true, pauseMinutes: true },
+    });
+    const posteMap = new Map(posteConfigs.map((p) => [p.label, p.pauseMinutes]));
+
     let created = 0;
     let updated = 0;
 
@@ -28,7 +35,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       let heuresDecimales: number | null = null;
 
       if (entry.heureDebut && entry.heureFin) {
-        const result = computeWorkDuration(entry.heureDebut, entry.heureFin);
+        const pauseMinutes = posteMap.get(employee.poste) ?? 0;
+        const result = computeWorkDuration(entry.heureDebut, entry.heureFin, pauseMinutes);
         tempsTravail = result.time;
         heuresDecimales = result.decimal;
       }

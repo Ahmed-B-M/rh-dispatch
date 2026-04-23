@@ -6,24 +6,24 @@ const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? proce
 const prisma = new PrismaClient({ adapter });
 
 const ABSENCE_CODES = [
-  { code: "Présent", label: "Présent", color: "#22c55e", isWork: true, sortOrder: 1 },
-  { code: "Repos", label: "Repos", color: "#3b82f6", isWork: false, sortOrder: 2 },
-  { code: "Formation", label: "Formation", color: "#8b5cf6", isWork: true, sortOrder: 3 },
-  { code: "Absence injustifiée", label: "Absence injustifiée", color: "#ef4444", isWork: false, sortOrder: 4 },
-  { code: "Accident travail", label: "Accident travail", color: "#f97316", isWork: false, sortOrder: 5 },
-  { code: "Conges payes", label: "Congés payés", color: "#06b6d4", isWork: false, sortOrder: 6 },
-  { code: "Maladie", label: "Maladie", color: "#f43f5e", isWork: false, sortOrder: 7 },
-  { code: "Mise à pied", label: "Mise à pied", color: "#dc2626", isWork: false, sortOrder: 8 },
-  { code: "Abs convenu non rémunérée", label: "Absence convenue non rémunérée", color: "#a855f7", isWork: false, sortOrder: 9 },
-  { code: "Accident Trajet", label: "Accident Trajet", color: "#f97316", isWork: false, sortOrder: 10 },
-  { code: "Congés sans solde", label: "Congés sans solde", color: "#0ea5e9", isWork: false, sortOrder: 11 },
-  { code: "Abs evenement fam.", label: "Absence événement familial", color: "#d946ef", isWork: false, sortOrder: 12 },
-  { code: "Congés naissance", label: "Congés naissance", color: "#14b8a6", isWork: false, sortOrder: 13 },
-  { code: "Mal. professionnelle", label: "Maladie professionnelle", color: "#e11d48", isWork: false, sortOrder: 14 },
-  { code: "Paternité", label: "Paternité", color: "#2563eb", isWork: false, sortOrder: 15 },
-  { code: "Préavis non eff. pay", label: "Préavis non effectué payé", color: "#eab308", isWork: false, sortOrder: 16 },
-  { code: "Préavis n.eff. n.pay", label: "Préavis non effectué non payé", color: "#ca8a04", isWork: false, sortOrder: 17 },
-  { code: "Repos compensateur", label: "Repos compensateur", color: "#6366f1", isWork: false, sortOrder: 18 },
+  { code: "Présent",                  label: "Présent",                           color: "#22c55e", isWork: true,  isWeekendInclusive: false, sortOrder: 1  },
+  { code: "Repos",                    label: "Repos",                             color: "#3b82f6", isWork: false, isWeekendInclusive: false, sortOrder: 2  },
+  { code: "Formation",                label: "Formation",                         color: "#8b5cf6", isWork: true,  isWeekendInclusive: false, sortOrder: 3  },
+  { code: "Absence injustifiée",      label: "Absence injustifiée",               color: "#ef4444", isWork: false, isWeekendInclusive: false, sortOrder: 4  },
+  { code: "Accident travail",         label: "Accident travail",                  color: "#f97316", isWork: false, isWeekendInclusive: true,  sortOrder: 5  },
+  { code: "Conges payes",             label: "Congés payés",                      color: "#06b6d4", isWork: false, isWeekendInclusive: false, sortOrder: 6  },
+  { code: "Maladie",                  label: "Maladie",                           color: "#f43f5e", isWork: false, isWeekendInclusive: true,  sortOrder: 7  },
+  { code: "Mise à pied",              label: "Mise à pied",                       color: "#dc2626", isWork: false, isWeekendInclusive: true,  sortOrder: 8  },
+  { code: "Abs convenu non rémunérée",label: "Absence convenue non rémunérée",   color: "#a855f7", isWork: false, isWeekendInclusive: false, sortOrder: 9  },
+  { code: "Accident Trajet",          label: "Accident Trajet",                   color: "#f97316", isWork: false, isWeekendInclusive: true,  sortOrder: 10 },
+  { code: "Congés sans solde",        label: "Congés sans solde",                 color: "#0ea5e9", isWork: false, isWeekendInclusive: false, sortOrder: 11 },
+  { code: "Abs evenement fam.",       label: "Absence événement familial",        color: "#d946ef", isWork: false, isWeekendInclusive: false, sortOrder: 12 },
+  { code: "Congés naissance",         label: "Congés naissance",                  color: "#14b8a6", isWork: false, isWeekendInclusive: true,  sortOrder: 13 },
+  { code: "Mal. professionnelle",     label: "Maladie professionnelle",           color: "#e11d48", isWork: false, isWeekendInclusive: true,  sortOrder: 14 },
+  { code: "Paternité",                label: "Paternité",                         color: "#2563eb", isWork: false, isWeekendInclusive: true,  sortOrder: 15 },
+  { code: "Préavis non eff. pay",     label: "Préavis non effectué payé",         color: "#eab308", isWork: false, isWeekendInclusive: false, sortOrder: 16 },
+  { code: "Préavis n.eff. n.pay",     label: "Préavis non effectué non payé",     color: "#ca8a04", isWork: false, isWeekendInclusive: false, sortOrder: 17 },
+  { code: "Repos compensateur",       label: "Repos compensateur",                color: "#6366f1", isWork: false, isWeekendInclusive: false, sortOrder: 18 },
 ] as const;
 
 const SITES = [
@@ -38,17 +38,17 @@ const SITES = [
 ] as const;
 
 const POSTES = [
-  { label: "Conducteur PL", mealAllowance: 15.96 },
-  { label: "Conducteur SPL", mealAllowance: 15.96 },
-  { label: "Conducteur VL", mealAllowance: 15.96 },
-  { label: "Dispatcheur", mealAllowance: 7.30 },
-  { label: "Chef d'équipe", mealAllowance: 7.30 },
-  { label: "Responsable exploitation", mealAllowance: 7.30 },
-  { label: "Agent logistique", mealAllowance: 7.30 },
-  { label: "Manutentionnaire", mealAllowance: 7.30 },
-  { label: "Cariste", mealAllowance: 7.30 },
-  { label: "Préparateur de commandes", mealAllowance: 7.30 },
-  { label: "Agent administratif", mealAllowance: 0 },
+  { label: "Conducteur PL", mealAllowance: 15.96, pauseMinutes: 0 },
+  { label: "Conducteur SPL", mealAllowance: 15.96, pauseMinutes: 0 },
+  { label: "Conducteur VL", mealAllowance: 15.96, pauseMinutes: 0 },
+  { label: "Dispatcheur", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Chef d'équipe", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Responsable exploitation", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Agent logistique", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Manutentionnaire", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Cariste", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Préparateur de commandes", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Agent administratif", mealAllowance: 0, pauseMinutes: 0 },
 ] as const;
 
 const USERS = [
@@ -69,7 +69,7 @@ async function main(): Promise<void> {
   for (const ac of ABSENCE_CODES) {
     await prisma.absenceCode.upsert({
       where: { code: ac.code },
-      update: { label: ac.label, color: ac.color, isWork: ac.isWork, sortOrder: ac.sortOrder },
+      update: { label: ac.label, color: ac.color, isWork: ac.isWork, isWeekendInclusive: ac.isWeekendInclusive, sortOrder: ac.sortOrder },
       create: ac,
     });
   }
@@ -87,7 +87,7 @@ async function main(): Promise<void> {
   for (const poste of POSTES) {
     await prisma.posteConfig.upsert({
       where: { label: poste.label },
-      update: { mealAllowance: poste.mealAllowance },
+      update: { mealAllowance: poste.mealAllowance, pauseMinutes: poste.pauseMinutes },
       create: poste,
     });
   }

@@ -1,0 +1,20 @@
+<svg width="160" height="36" viewBox="0 0 160 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="mark-grad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Logomark -->
+  <rect width="36" height="36" rx="9" fill="url(#mark-grad)"/>
+  <rect x="8"  y="10"   width="8"  height="2.8" rx="1.4" fill="white" fill-opacity="0.45"/>
+  <rect x="19" y="10"   width="9"  height="2.8" rx="1.4" fill="white" fill-opacity="0.45"/>
+  <rect x="8"  y="16.6" width="20" height="2.8" rx="1.4" fill="white"/>
+  <rect x="8"  y="23.2" width="8"  height="2.8" rx="1.4" fill="white" fill-opacity="0.45"/>
+  <rect x="19" y="23.2" width="9"  height="2.8" rx="1.4" fill="white" fill-opacity="0.45"/>
+
+  <!-- Wordmark -->
+  <text x="46" y="13" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="9.5" font-weight="500" fill="#94a3b8" letter-spacing="0.08em">ID LOGISTICS</text>
+  <text x="46" y="27" font-family="'Geist', 'Inter', system-ui, sans-serif" font-size="13" font-weight="700" fill="white" letter-spacing="-0.01em">RH Dispatch</text>
+</svg>

@@ -17,6 +17,7 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
       data: {
         ...(body.label != null && { label: body.label.trim() }),
         ...(body.mealAllowance != null && { mealAllowance: body.mealAllowance }),
+        ...(body.pauseMinutes != null && { pauseMinutes: body.pauseMinutes }),
         ...(body.isActive != null && { isActive: body.isActive }),
       },
     });

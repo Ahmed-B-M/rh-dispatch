@@ -28,6 +28,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       data: {
         label: body.label.trim(),
         mealAllowance: body.mealAllowance ?? 0,
+        pauseMinutes: body.pauseMinutes ?? 0,
       },
     });
     return NextResponse.json(poste, { status: 201 });

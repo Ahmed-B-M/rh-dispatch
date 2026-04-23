@@ -17,7 +17,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const toParam = searchParams.get("to");
     const siteId = searchParams.get("siteId");
     const categorie = searchParams.get("categorie");
-    const poste = searchParams.get("poste");
+    const postes = searchParams.getAll("poste");
 
     const baseDate = fromParam ? new Date(fromParam) : new Date();
     const periodStart = fromParam
@@ -35,7 +35,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
     if (categorie) employeeWhere.categorie = categorie;
-    if (poste) employeeWhere.poste = poste;
+    if (postes.length === 1) employeeWhere.poste = postes[0];
+    else if (postes.length > 1) employeeWhere.poste = { in: postes };
     if (siteId) {
       employeeWhere.sites = { some: { siteId } };
     } else if (allowedSites) {

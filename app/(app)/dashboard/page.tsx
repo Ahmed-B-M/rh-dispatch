@@ -3,8 +3,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSession } from "next-auth/react";
 import { useState } from "react";
-import { Clock, TrendingDown, Users, BarChart3, ChevronLeft, ChevronRight } from "lucide-react";
+import { Clock, TrendingDown, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { PageHelp } from "@/components/ui/page-help";
 import {
   BarChart,
   Bar,
@@ -77,24 +78,44 @@ export default function DashboardPage() {
       icon: Users,
       color: "text-emerald-600 bg-emerald-50",
     },
-    {
-      label: "Heures moy./jour",
-      value: data ? `${data.avgHoursPerDay}h` : "—",
-      icon: BarChart3,
-      color: "text-blue-600 bg-blue-50",
-    },
   ];
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
-          <p className="text-sm text-slate-500">
-            Bienvenue
-            {session?.user?.name ? `, ${session.user.name}` : ""} — Vue
-            d&apos;ensemble des heures et absences
-          </p>
+        <div className="flex items-center gap-2">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Dashboard</h1>
+            <p className="text-sm text-slate-500">
+              Bienvenue
+              {session?.user?.name ? `, ${session.user.name}` : ""} — Vue
+              d&apos;ensemble des heures et absences
+            </p>
+          </div>
+          <PageHelp
+            title="Dashboard"
+            description="Vue d'ensemble des heures travaillées et des absences."
+            sections={[
+              {
+                title: "Indicateurs",
+                items: [
+                  "Total des heures travaillées sur le mois sélectionné.",
+                  "Les heures travaillées sont nettes de la pause configurée par poste dans Paramètres.",
+                  "Taux d'absence : ratio entrées absence / total entrées.",
+                  "Employés actifs : nombre de salariés avec au moins une entrée.",
+                  "Moyenne d'heures par jour travaillé.",
+                ],
+              },
+              {
+                title: "Navigation",
+                items: [
+                  "Utilisez les flèches ← → pour changer de mois.",
+                  "Le graphique « Heures par site » compare la charge entre les sites.",
+                  "Le camembert « Absences » décompose les types d'absence du mois.",
+                ],
+              },
+            ]}
+          />
         </div>
         <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-1 py-1">
           <button
