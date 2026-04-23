@@ -544,7 +544,7 @@ export default function PlanningPage() {
       date,
       rect: {
         left: Math.min(rect.left, window.innerWidth - 290),
-        top: Math.min(rect.bottom + 4, window.innerHeight - 320),
+        top: Math.min(rect.bottom + 4, window.innerHeight - 500),
       },
     });
     setLastClickedCell({ employeeId, date });
@@ -557,7 +557,7 @@ export default function PlanningPage() {
       mode: "selection",
       rect: {
         left: Math.min(rect.left, window.innerWidth - 290),
-        top: Math.min(rect.bottom + 4, window.innerHeight - 320),
+        top: Math.min(rect.bottom + 4, window.innerHeight - 500),
       },
     });
   }
@@ -1307,11 +1307,15 @@ export default function PlanningPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setEditingPopover(null)} />
           <div
-            className="fixed z-50 w-80 rounded-xl border border-slate-200 bg-white shadow-elevated animate-scale-in"
-            style={{ left: editingPopover.rect.left, top: editingPopover.rect.top }}
+            className="fixed z-50 flex w-80 flex-col rounded-xl border border-slate-200 bg-white shadow-elevated animate-scale-in"
+            style={{
+              left: editingPopover.rect.left,
+              top: editingPopover.rect.top,
+              maxHeight: `calc(100vh - ${editingPopover.rect.top}px - 16px)`,
+            }}
           >
             {/* Popover header */}
-            <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
               <p className="text-sm font-semibold text-slate-700">
                 {editingPopover.mode === "cell"
                   ? format(new Date(editingPopover.date), "EEEE d MMMM", { locale: fr })
@@ -1325,7 +1329,7 @@ export default function PlanningPage() {
               </button>
             </div>
 
-            <div className="space-y-4 p-4">
+            <div className="flex-1 space-y-4 overflow-y-auto p-4">
               {/* Visual absence code picker */}
               <div>
                 <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Statut</p>
