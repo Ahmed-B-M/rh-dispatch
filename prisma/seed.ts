@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { hash } from "bcryptjs";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL! });
+const prisma = new PrismaClient({ adapter });
 
 const ABSENCE_CODES = [
   { code: "Présent", label: "Présent", color: "#22c55e", isWork: true, sortOrder: 1 },

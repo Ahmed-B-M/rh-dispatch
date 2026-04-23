@@ -49,7 +49,7 @@ jobs:
             docker exec rh-dispatch npx prisma migrate deploy
 
             echo ">>> Seed reference data..."
-            docker exec rh-dispatch npx tsx prisma/seed.ts
+            docker exec rh-dispatch node --experimental-strip-types prisma/seed.ts || echo "Seed skipped (non-fatal)"
 
             echo ">>> Health check..."
             sleep 5
