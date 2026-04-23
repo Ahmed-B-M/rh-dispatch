@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "RH Dispatch | ID Logistics",
   description: "Gestion des heures et planning — ID Logistics",
+  icons: { icon: "/favicon.svg" },
 };
 
 export default function RootLayout({
