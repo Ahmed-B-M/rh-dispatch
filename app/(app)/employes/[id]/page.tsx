@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Edit, Calendar, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, Edit, Calendar, ArrowRightLeft, ClipboardList } from "lucide-react";
 import { cn, formatDate } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -149,6 +149,13 @@ export default function EmployeeDetailPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/recap?search=${encodeURIComponent(employee.nom)}`}
+            className="inline-flex items-center gap-2 rounded-lg border border-indigo-200 bg-indigo-50 px-4 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+          >
+            <ClipboardList className="h-4 w-4" />
+            Récap mensuel
+          </Link>
           <button
             onClick={() => setShowTransfer(true)}
             className="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-700 hover:bg-amber-100"

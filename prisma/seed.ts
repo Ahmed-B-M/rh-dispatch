@@ -34,6 +34,20 @@ const SITES = [
   { code: "ROSNY", label: "Rosny" },
 ] as const;
 
+const POSTES = [
+  { label: "Conducteur PL", mealAllowance: 15.96 },
+  { label: "Conducteur SPL", mealAllowance: 15.96 },
+  { label: "Conducteur VL", mealAllowance: 15.96 },
+  { label: "Dispatcheur", mealAllowance: 7.30 },
+  { label: "Chef d'équipe", mealAllowance: 7.30 },
+  { label: "Responsable exploitation", mealAllowance: 7.30 },
+  { label: "Agent logistique", mealAllowance: 7.30 },
+  { label: "Manutentionnaire", mealAllowance: 7.30 },
+  { label: "Cariste", mealAllowance: 7.30 },
+  { label: "Préparateur de commandes", mealAllowance: 7.30 },
+  { label: "Agent administratif", mealAllowance: 0 },
+] as const;
+
 async function main(): Promise<void> {
   console.log("Seeding absence codes...");
   for (const ac of ABSENCE_CODES) {
@@ -50,6 +64,15 @@ async function main(): Promise<void> {
       where: { code: site.code },
       update: { label: site.label },
       create: site,
+    });
+  }
+
+  console.log("Seeding postes...");
+  for (const poste of POSTES) {
+    await prisma.posteConfig.upsert({
+      where: { label: poste.label },
+      update: { mealAllowance: poste.mealAllowance },
+      create: poste,
     });
   }
 

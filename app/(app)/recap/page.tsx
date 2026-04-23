@@ -1,8 +1,21 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
-import { ChevronLeft, ChevronRight, Download, Moon, Clock, Utensils, CalendarCheck } from "lucide-react";
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Moon,
+  Clock,
+  Utensils,
+  CalendarCheck,
+  Search,
+  ArrowUpDown,
+  ExternalLink,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface RecapRow {
@@ -39,6 +52,9 @@ interface Site {
   label: string;
 }
 
+type SortField = "nom" | "joursTravailles" | "heuresTotales" | "heuresNuit" | "montantPanier";
+type SortDir = "asc" | "desc";
+
 const MONTHS = [
   "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
   "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre",
@@ -50,12 +66,22 @@ const categorieColors: Record<string, string> = {
   LOGISTIQUE: "bg-emerald-100 text-emerald-700",
 };
 
+const contratColors: Record<string, string> = {
+  CDI: "bg-emerald-100 text-emerald-700",
+  CDD: "bg-amber-100 text-amber-700",
+  ALTERNANCE: "bg-sky-100 text-sky-700",
+};
+
 export default function RecapPage() {
+  const searchParams = useSearchParams();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [filterCategorie, setFilterCategorie] = useState("");
   const [filterSiteId, setFilterSiteId] = useState("");
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
+  const [sortField, setSortField] = useState<SortField>("nom");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
 
   const { data: sites = [] } = useQuery<Site[]>({
     queryKey: ["sites"],
@@ -100,9 +126,10 @@ export default function RecapPage() {
   }
 
   function handleExport() {
+    const lastDay = new Date(year, month, 0).getDate();
     const params = new URLSearchParams({
       from: `${year}-${String(month).padStart(2, "0")}-01`,
-      to: `${year}-${String(month).padStart(2, "0")}-28`,
+      to: `${year}-${String(month).padStart(2, "0")}-${String(lastDay).padStart(2, "0")}`,
       format: "synthesis",
     });
     if (filterCategorie) params.set("categorie", filterCategorie);
@@ -110,8 +137,40 @@ export default function RecapPage() {
     window.location.href = `/api/export?${params}`;
   }
 
-  const rows = data?.rows ?? [];
+  function toggleSort(field: SortField) {
+    if (sortField === field) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortField(field);
+      setSortDir(field === "nom" ? "asc" : "desc");
+    }
+  }
+
+  const rawRows = data?.rows ?? [];
   const totals = data?.totals;
+
+  const rows = useMemo(() => {
+    let filtered = rawRows;
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      filtered = filtered.filter(
+        (r) =>
+          r.nom.toLowerCase().includes(q) ||
+          r.prenom.toLowerCase().includes(q) ||
+          r.matricule.includes(q) ||
+          r.poste.toLowerCase().includes(q),
+      );
+    }
+    const sorted = [...filtered].sort((a, b) => {
+      const mul = sortDir === "asc" ? 1 : -1;
+      if (sortField === "nom") {
+        const cmp = a.nom.localeCompare(b.nom, "fr") || a.prenom.localeCompare(b.prenom, "fr");
+        return cmp * mul;
+      }
+      return (a[sortField] - b[sortField]) * mul;
+    });
+    return sorted;
+  }, [rawRows, search, sortField, sortDir]);
 
   return (
     <div className="flex h-full flex-col space-y-4">
@@ -120,7 +179,7 @@ export default function RecapPage() {
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Récap mensuel</h1>
           <p className="text-sm text-slate-500">
-            Synthèse par salarié — {rows.length} employé(s)
+            Synthèse par salarié — {rows.length}{search ? ` / ${rawRows.length}` : ""} employé{rows.length > 1 ? "s" : ""}
           </p>
         </div>
         <button
@@ -176,6 +235,19 @@ export default function RecapPage() {
             </option>
           ))}
         </select>
+
+        <div className="h-6 w-px bg-slate-200" />
+
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Rechercher..."
+            className="rounded-lg border border-slate-200 py-1.5 pl-9 pr-3 text-sm outline-none focus:border-primary-500"
+          />
+        </div>
       </div>
 
       {/* Summary cards */}
@@ -250,8 +322,14 @@ export default function RecapPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Matricule
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Nom Prénom
+                <th
+                  className="cursor-pointer px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleSort("nom")}
+                >
+                  <span className="inline-flex items-center gap-1">
+                    Nom Prénom
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "nom" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Poste
@@ -259,14 +337,35 @@ export default function RecapPage() {
                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Catégorie
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Jours
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  Contrat
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Heures
+                <th
+                  className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleSort("joursTravailles")}
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Jours
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "joursTravailles" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  H. nuit
+                <th
+                  className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleSort("heuresTotales")}
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Heures
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "heuresTotales" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
+                </th>
+                <th
+                  className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleSort("heuresNuit")}
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    H. nuit
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "heuresNuit" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Paniers
@@ -274,8 +373,14 @@ export default function RecapPage() {
                 <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
                   Tarif/j
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
-                  Montant
+                <th
+                  className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
+                  onClick={() => toggleSort("montantPanier")}
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    Montant
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "montantPanier" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
                 </th>
               </tr>
             </thead>
@@ -288,8 +393,14 @@ export default function RecapPage() {
                   <td className="px-4 py-3 font-mono text-xs text-slate-500">
                     {row.matricule}
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-900">
-                    {row.nom} {row.prenom}
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/employes/${row.employeeId}`}
+                      className="group inline-flex items-center gap-1 font-medium text-slate-900 hover:text-primary-600"
+                    >
+                      {row.nom} {row.prenom}
+                      <ExternalLink className="h-3 w-3 opacity-0 transition-opacity group-hover:opacity-100" />
+                    </Link>
                   </td>
                   <td className="px-4 py-3 text-slate-600">{row.poste}</td>
                   <td className="px-4 py-3">
@@ -301,6 +412,16 @@ export default function RecapPage() {
                       )}
                     >
                       {row.categorie}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={cn(
+                        "inline-block rounded-full px-2 py-0.5 text-xs font-medium",
+                        contratColors[row.typeContrat] ?? "bg-slate-100 text-slate-600",
+                      )}
+                    >
+                      {row.typeContrat}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-right font-medium text-slate-700">
@@ -349,22 +470,22 @@ export default function RecapPage() {
             {totals && (
               <tfoot>
                 <tr className="bg-slate-50 font-bold">
-                  <td colSpan={4} className="px-4 py-3 text-sm text-slate-700">
-                    TOTAL
+                  <td colSpan={5} className="px-4 py-3 text-sm text-slate-700">
+                    TOTAL ({rows.length} salarié{rows.length > 1 ? "s" : ""})
                   </td>
                   <td className="px-4 py-3 text-right text-slate-900">
-                    {totals.joursTravailles}
+                    {rows.reduce((s, r) => s + r.joursTravailles, 0)}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-900">
-                    {totals.heuresTotales.toFixed(1)}h
+                    {rows.reduce((s, r) => s + r.heuresTotales, 0).toFixed(1)}h
                   </td>
                   <td className="px-4 py-3 text-right text-indigo-600">
-                    {totals.heuresNuit.toFixed(1)}h
+                    {rows.reduce((s, r) => s + r.heuresNuit, 0).toFixed(1)}h
                   </td>
                   <td className="px-4 py-3 text-right" />
                   <td className="px-4 py-3 text-right" />
                   <td className="px-4 py-3 text-right text-amber-600">
-                    {totals.montantPanier.toFixed(2)} €
+                    {rows.reduce((s, r) => s + r.montantPanier, 0).toFixed(2)} €
                   </td>
                 </tr>
               </tfoot>
