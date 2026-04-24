@@ -14,6 +14,7 @@ import {
   Clock,
   Utensils,
   CalendarCheck,
+  Sun,
   Search,
   ArrowUpDown,
   ExternalLink,
@@ -29,6 +30,7 @@ interface RecapRow {
   categorie: string;
   typeContrat: string;
   joursTravailles: number;
+  joursDimanche: number;
   heuresTotales: number;
   heuresNuit: number;
   nbPanierRepas: number;
@@ -42,6 +44,7 @@ interface RecapData {
   rows: RecapRow[];
   totals: {
     joursTravailles: number;
+    joursDimanche: number;
     heuresTotales: number;
     heuresNuit: number;
     montantPanier: number;
@@ -304,7 +307,7 @@ function RecapContent() {
 
       {/* Summary cards */}
       {totals && (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
             <div className="rounded-lg bg-primary-50 p-2 text-primary-600">
               <CalendarCheck className="h-5 w-5" />
@@ -313,6 +316,17 @@ function RecapContent() {
               <p className="text-xs text-slate-400">Jours travaillés</p>
               <p className="text-lg font-bold text-slate-900">
                 {totals.joursTravailles.toLocaleString("fr-FR")}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-soft">
+            <div className="rounded-lg bg-orange-100 p-2 text-orange-600">
+              <Sun className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-orange-500">Dimanches</p>
+              <p className="text-lg font-bold text-orange-700">
+                {totals.joursDimanche.toLocaleString("fr-FR")}
               </p>
             </div>
           </div>
@@ -401,6 +415,9 @@ function RecapContent() {
                     <ArrowUpDown className={cn("h-3 w-3", sortField === "joursTravailles" ? "text-primary-500" : "text-slate-300")} />
                   </span>
                 </th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-orange-500">
+                  Dim.
+                </th>
                 <th
                   className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700"
                   onClick={() => toggleSort("heuresTotales")}
@@ -479,6 +496,9 @@ function RecapContent() {
                   <td className="px-4 py-3 text-right font-medium text-slate-700">
                     {row.joursTravailles}
                   </td>
+                  <td className={cn("px-4 py-3 text-right font-medium", row.joursDimanche > 0 ? "text-orange-600" : "text-slate-300")}>
+                    {row.joursDimanche > 0 ? row.joursDimanche : "—"}
+                  </td>
                   <td className="px-4 py-3 text-right font-medium text-slate-700">
                     {row.heuresTotales > 0
                       ? `${row.heuresTotales.toFixed(1)}h`
@@ -527,6 +547,9 @@ function RecapContent() {
                   </td>
                   <td className="px-4 py-3 text-right text-slate-900">
                     {rows.reduce((s, r) => s + r.joursTravailles, 0)}
+                  </td>
+                  <td className="px-4 py-3 text-right text-orange-600">
+                    {rows.reduce((s, r) => s + r.joursDimanche, 0) || "—"}
                   </td>
                   <td className="px-4 py-3 text-right text-slate-900">
                     {rows.reduce((s, r) => s + r.heuresTotales, 0).toFixed(1)}h

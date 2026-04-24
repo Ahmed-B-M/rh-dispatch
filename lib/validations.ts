@@ -8,8 +8,6 @@ export const employeeCreateSchema = z.object({
   categorie: z.enum(["SEDENTAIRE", "TRANSPORT", "LOGISTIQUE"]),
   poste: z.string().min(1, "Poste requis"),
   affectationCode: z.string().nullable().optional(),
-  dateDebut: z.string().min(1, "Date début requise"),
-  dateFin: z.string().nullable().optional(),
   dateEntree: z.string().min(1, "Date entrée requise"),
   dateSortie: z.string().nullable().optional(),
   isActive: z.boolean().default(true),

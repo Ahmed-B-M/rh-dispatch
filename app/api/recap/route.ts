@@ -58,6 +58,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
             date: { gte: monthStart, lte: monthEnd },
           },
           select: {
+            date: true,
             heureDebut: true,
             heureFin: true,
             heuresDecimales: true,
@@ -76,6 +77,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       let joursTravailles = 0;
       let heuresTotales = 0;
       let heuresNuit = 0;
+      let joursDimanche = 0;
 
       for (const entry of emp.entries) {
         const isWork = entry.absenceCode?.isWork === true;
@@ -85,6 +87,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
           if (entry.heureDebut && entry.heureFin) {
             heuresNuit += nightHoursOverlap(entry.heureDebut, entry.heureFin);
+          }
+
+          if (new Date(entry.date).getDay() === 0) {
+            joursDimanche++;
           }
         }
       }
@@ -101,6 +107,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         categorie: emp.categorie,
         typeContrat: emp.typeContrat,
         joursTravailles,
+        joursDimanche,
         heuresTotales: Math.round(heuresTotales * 100) / 100,
         heuresNuit: Math.round(heuresNuit * 100) / 100,
         nbPanierRepas: joursTravailles,
@@ -115,6 +122,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       rows,
       totals: {
         joursTravailles: rows.reduce((s, r) => s + r.joursTravailles, 0),
+        joursDimanche: rows.reduce((s, r) => s + r.joursDimanche, 0),
         heuresTotales: Math.round(rows.reduce((s, r) => s + r.heuresTotales, 0) * 100) / 100,
         heuresNuit: Math.round(rows.reduce((s, r) => s + r.heuresNuit, 0) * 100) / 100,
         montantPanier: Math.round(rows.reduce((s, r) => s + r.montantPanier, 0) * 100) / 100,

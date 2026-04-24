@@ -27,9 +27,7 @@ export default function ModifierEmployePage() {
     categorie: "TRANSPORT",
     poste: "",
     affectationCode: "",
-    dateDebut: "",
     dateEntree: "",
-    dateFin: "",
     dateSortie: "",
     isActive: true,
     note: "",
@@ -64,9 +62,7 @@ export default function ModifierEmployePage() {
         categorie: employee.categorie,
         poste: employee.poste,
         affectationCode: employee.affectationCode ?? "",
-        dateDebut: employee.dateDebut?.split("T")[0] ?? "",
         dateEntree: employee.dateEntree?.split("T")[0] ?? "",
-        dateFin: employee.dateFin?.split("T")[0] ?? "",
         dateSortie: employee.dateSortie?.split("T")[0] ?? "",
         isActive: employee.isActive,
         note: employee.note ?? "",
@@ -83,7 +79,6 @@ export default function ModifierEmployePage() {
         body: JSON.stringify({
           ...form,
           affectationCode: form.affectationCode || null,
-          dateFin: form.dateFin || null,
           dateSortie: form.dateSortie || null,
         }),
       });
@@ -198,29 +193,6 @@ export default function ModifierEmployePage() {
               <option value="TRANSPORT">Transport</option>
               <option value="LOGISTIQUE">Logistique</option>
             </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Date début contrat</label>
-            <input
-              type="date"
-              value={form.dateDebut}
-              onChange={(e) => updateField("dateDebut", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">
-              Date fin contrat {form.typeContrat !== "CDI" && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type="date"
-              value={form.dateFin}
-              onChange={(e) => updateField("dateFin", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
-            />
           </div>
         </div>
 

@@ -24,9 +24,7 @@ export default function NouvelEmployePage() {
     categorie: "TRANSPORT" as string,
     poste: "",
     affectationCode: "",
-    dateDebut: "",
     dateEntree: "",
-    dateFin: "",
     dateSortie: "",
     note: "",
     siteIds: [] as string[],
@@ -49,7 +47,6 @@ export default function NouvelEmployePage() {
         body: JSON.stringify({
           ...form,
           affectationCode: form.affectationCode || null,
-          dateFin: form.dateFin || null,
           dateSortie: form.dateSortie || null,
         }),
       });
@@ -164,31 +161,6 @@ export default function NouvelEmployePage() {
               <option value="TRANSPORT">Transport</option>
               <option value="LOGISTIQUE">Logistique</option>
             </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">Date début contrat *</label>
-            <input
-              type="date"
-              required
-              value={form.dateDebut}
-              onChange={(e) => updateField("dateDebut", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
-            />
-          </div>
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-slate-700">
-              Date fin contrat {form.typeContrat !== "CDI" && <span className="text-red-500">*</span>}
-            </label>
-            <input
-              type="date"
-              required={form.typeContrat !== "CDI"}
-              value={form.dateFin}
-              onChange={(e) => updateField("dateFin", e.target.value)}
-              className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-primary-500"
-            />
           </div>
         </div>
 

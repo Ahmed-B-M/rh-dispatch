@@ -185,7 +185,6 @@ export default function EmployeeDetailPage() {
               ["Poste", employee.poste],
               ["Affectation", employee.affectationCode || "—"],
               ["Date entrée", formatDate(employee.dateEntree)],
-              ["Date début", formatDate(employee.dateDebut)],
               [
                 "Date sortie",
                 employee.dateSortie ? formatDate(employee.dateSortie) : "—",

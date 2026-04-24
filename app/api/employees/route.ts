@@ -65,8 +65,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const employee = await prisma.employee.create({
       data: {
         ...employeeData,
-        dateDebut: new Date(employeeData.dateDebut),
-        dateFin: employeeData.dateFin ? new Date(employeeData.dateFin) : null,
+        dateDebut: new Date(employeeData.dateEntree),
         dateEntree: new Date(employeeData.dateEntree),
         dateSortie: employeeData.dateSortie ? new Date(employeeData.dateSortie) : null,
         sites: siteIds?.length

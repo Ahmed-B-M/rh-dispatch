@@ -45,8 +45,6 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
     const { siteIds, ...employeeData } = data;
 
     const updateData: Record<string, unknown> = { ...employeeData };
-    if (employeeData.dateDebut) updateData.dateDebut = new Date(employeeData.dateDebut);
-    if (employeeData.dateFin !== undefined) updateData.dateFin = employeeData.dateFin ? new Date(employeeData.dateFin) : null;
     if (employeeData.dateEntree) updateData.dateEntree = new Date(employeeData.dateEntree);
     if (employeeData.dateSortie !== undefined) updateData.dateSortie = employeeData.dateSortie ? new Date(employeeData.dateSortie) : null;
 
