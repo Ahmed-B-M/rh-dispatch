@@ -263,6 +263,11 @@ function PlanningContent() {
     },
   });
 
+  const presentCodeId = useMemo(
+    () => absenceCodes.find((a) => a.code === "Présent")?.id ?? "",
+    [absenceCodes],
+  );
+
   const { data: sites = [] } = useQuery<Site[]>({
     queryKey: ["sites"],
     queryFn: async () => {
@@ -1426,6 +1431,7 @@ function PlanningContent() {
                             ...prev,
                             heureDebut: isActive ? "" : p.start,
                             heureFin: isActive ? "" : p.end,
+                            absenceCodeId: !isActive && !prev.absenceCodeId ? presentCodeId : prev.absenceCodeId,
                           }))
                         }
                         className={cn(
@@ -1455,7 +1461,11 @@ function PlanningContent() {
                     <input
                       type="time"
                       value={popoverData.heureDebut}
-                      onChange={(e) => setPopoverData((prev) => ({ ...prev, heureDebut: e.target.value }))}
+                      onChange={(e) => setPopoverData((prev) => ({
+                        ...prev,
+                        heureDebut: e.target.value,
+                        absenceCodeId: e.target.value && !prev.absenceCodeId ? presentCodeId : prev.absenceCodeId,
+                      }))}
                       className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                     />
                   </div>
@@ -1464,7 +1474,11 @@ function PlanningContent() {
                     <input
                       type="time"
                       value={popoverData.heureFin}
-                      onChange={(e) => setPopoverData((prev) => ({ ...prev, heureFin: e.target.value }))}
+                      onChange={(e) => setPopoverData((prev) => ({
+                        ...prev,
+                        heureFin: e.target.value,
+                        absenceCodeId: e.target.value && !prev.absenceCodeId ? presentCodeId : prev.absenceCodeId,
+                      }))}
                       className="mt-0.5 w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20"
                     />
                   </div>
