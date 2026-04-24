@@ -29,8 +29,8 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
     let heuresDecimales = existing.heuresDecimales ? Number(existing.heuresDecimales) : null;
 
     if (heureDebut && heureFin) {
-      const posteConfig = await prisma.posteConfig.findUnique({
-        where: { label: existing.posteOccupe ?? "" },
+      const posteConfig = await prisma.posteConfig.findFirst({
+        where: { label: { equals: existing.posteOccupe ?? "", mode: "insensitive" } },
       }).catch(() => null);
       const result = computeWorkDuration(heureDebut, heureFin, posteConfig?.pauseMinutes ?? 0);
       tempsTravail = result.time;

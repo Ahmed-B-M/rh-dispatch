@@ -321,7 +321,7 @@ function PlanningContent() {
       ? filteredMatrix.find((r) => r.employee.id === editingPopover.employeeId)?.employee.poste
       : undefined;
     const pauseMinutes = employeePoste
-      ? (postes.find((p) => p.label === employeePoste)?.pauseMinutes ?? 0)
+      ? (postes.find((p) => p.label.toLowerCase() === employeePoste.toLowerCase())?.pauseMinutes ?? 0)
       : 0;
     return computeDuration(popoverData.heureDebut, popoverData.heureFin, pauseMinutes);
   }, [popoverData.heureDebut, popoverData.heureFin, editingPopover, filteredMatrix, postes]);

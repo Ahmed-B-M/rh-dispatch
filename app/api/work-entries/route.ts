@@ -108,7 +108,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
 
     await assertEmployeeInScope(session, data.employeeId);
 
-    const posteConfig = await prisma.posteConfig.findUnique({ where: { label: employee.poste } }).catch(() => null);
+    const posteConfig = await prisma.posteConfig.findFirst({ where: { label: { equals: employee.poste, mode: "insensitive" } } }).catch(() => null);
     const pauseMinutes = posteConfig?.pauseMinutes ?? 0;
     const date = new Date(data.date);
     let tempsTravail: string | null = null;

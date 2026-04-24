@@ -70,7 +70,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const posteConfigs = await prisma.posteConfig.findMany({
       where: { isActive: true },
     });
-    const posteMap = new Map(posteConfigs.map((p) => [p.label, Number(p.mealAllowance)]));
+    const posteMap = new Map(posteConfigs.map((p) => [p.label.toLowerCase(), Number(p.mealAllowance)]));
 
     const rows = employees.map((emp) => {
       let joursTravailles = 0;
@@ -89,7 +89,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         }
       }
 
-      const mealRate = posteMap.get(emp.poste) ?? 0;
+      const mealRate = posteMap.get(emp.poste.toLowerCase()) ?? 0;
       const montantPanier = Math.round(joursTravailles * mealRate * 100) / 100;
 
       return {
