@@ -323,7 +323,8 @@ function PlanningContent() {
     const pauseMinutes = employeePoste
       ? (postes.find((p) => p.label.toLowerCase() === employeePoste.toLowerCase())?.pauseMinutes ?? 0)
       : 0;
-    return computeDuration(popoverData.heureDebut, popoverData.heureFin, pauseMinutes);
+    const net = computeDuration(popoverData.heureDebut, popoverData.heureFin, pauseMinutes);
+    return net ? { net, pauseMinutes } : null;
   }, [popoverData.heureDebut, popoverData.heureFin, editingPopover, filteredMatrix, postes]);
 
   const saveMutation = useMutation({
@@ -1484,9 +1485,14 @@ function PlanningContent() {
                   </div>
                 </div>
                 {durationPreview && (
-                  <p className="mt-1.5 text-center text-xs font-semibold text-primary-600">
-                    = {durationPreview}
-                  </p>
+                  <div className="mt-1.5 text-center">
+                    <span className="text-xs font-semibold text-primary-600">= {durationPreview.net}</span>
+                    {durationPreview.pauseMinutes > 0 && (
+                      <span className="ml-1.5 text-[11px] text-slate-400">
+                        (pause {durationPreview.pauseMinutes} min déduite)
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
 
