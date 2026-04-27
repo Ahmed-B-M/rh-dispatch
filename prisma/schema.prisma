@@ -40,13 +40,62 @@ model Vehicle {
 }
 
 model PosteConfig {
-  id            String   @id @default(cuid())
-  label         String   @unique
-  mealAllowance Decimal  @default(0) @db.Decimal(6, 2)
-  pauseMinutes  Int      @default(0)
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id            String        @id @default(cuid())
+  label         String        @unique
+  mealAllowance Decimal       @default(0) @db.Decimal(6, 2)
+  pauseMinutes  Int           @default(0)
+  isActive      Boolean       @default(true)
+  pqsCriteria   PqsCriteria[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+// --- PQS (Prime Qualité de Service) ---
+
+model PqsCriteria {
+  id            String              @id @default(cuid())
+  posteConfigId String
+  label         String
+  amount        Decimal             @db.Decimal(8, 2)
+  sortOrder     Int                 @default(0)
+  isActive      Boolean             @default(true)
+  posteConfig   PosteConfig         @relation(fields: [posteConfigId], references: [id], onDelete: Cascade)
+  items         PqsEvaluationItem[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  @@index([posteConfigId])
+}
+
+model PqsEvaluation {
+  id          String              @id @default(cuid())
+  employeeId  String
+  year        Int
+  month       Int
+  validatedBy String?
+  comment     String?
+  employee    Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  items       PqsEvaluationItem[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([employeeId, year, month])
+  @@index([employeeId])
+  @@index([year, month])
+}
+
+model PqsEvaluationItem {
+  id           String        @id @default(cuid())
+  evaluationId String
+  criteriaId   String
+  achieved     Boolean       @default(false)
+  comment      String?
+  evaluation   PqsEvaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criteria     PqsCriteria   @relation(fields: [criteriaId], references: [id], onDelete: Cascade)
+
+  @@unique([evaluationId, criteriaId])
+  @@index([evaluationId])
+  @@index([criteriaId])
 }
 
 // --- EMPLOYEES ---
@@ -69,6 +118,7 @@ model Employee {
   note            String?
   sites           EmployeeSite[]
   entries         WorkEntry[]
+  pqsEvaluations  PqsEvaluation[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 

@@ -42,13 +42,24 @@ const POSTES = [
   { label: "Conducteur SPL", mealAllowance: 15.96, pauseMinutes: 0 },
   { label: "Conducteur VL", mealAllowance: 15.96, pauseMinutes: 0 },
   { label: "Dispatcheur", mealAllowance: 7.30, pauseMinutes: 0 },
-  { label: "Chef d'équipe", mealAllowance: 7.30, pauseMinutes: 0 },
+  { label: "Chef d'équipe", mealAllowance: 8.87, pauseMinutes: 60 },
   { label: "Responsable exploitation", mealAllowance: 7.30, pauseMinutes: 0 },
   { label: "Agent logistique", mealAllowance: 7.30, pauseMinutes: 0 },
   { label: "Manutentionnaire", mealAllowance: 7.30, pauseMinutes: 0 },
   { label: "Cariste", mealAllowance: 7.30, pauseMinutes: 0 },
   { label: "Préparateur de commandes", mealAllowance: 7.30, pauseMinutes: 0 },
   { label: "Agent administratif", mealAllowance: 0, pauseMinutes: 0 },
+  // PQS postes
+  { label: "CHEF DE GROUPE", mealAllowance: 8.87, pauseMinutes: 60 },
+  { label: "CHAUFFEUR LIVREUR", mealAllowance: 16.20, pauseMinutes: 30 },
+  { label: "RESPONSABLE METHODE & QUALITE", mealAllowance: 8.87, pauseMinutes: 60 },
+  { label: "RESPONSABLE EXPLOITATION", mealAllowance: 0, pauseMinutes: 60 },
+  { label: "RESPONSABLE DE SERVICE", mealAllowance: 8.87, pauseMinutes: 60 },
+  { label: "AGENT EXPLOIT", mealAllowance: 4.32, pauseMinutes: 60 },
+  { label: "RESPONSABLE DOSSIER", mealAllowance: 15.20, pauseMinutes: 60 },
+  { label: "ASSISTANTE DE SITE", mealAllowance: 8.87, pauseMinutes: 60 },
+  { label: "CHEF D'EQUIPE", mealAllowance: 8.87, pauseMinutes: 60 },
+  { label: "COORDINATEUR TRANSPORT", mealAllowance: 8.87, pauseMinutes: 60 },
 ] as const;
 
 const USERS = [
@@ -124,6 +135,125 @@ async function main(): Promise<void> {
       });
     }
     console.log(`  ${u.email} → ${u.role} (${u.sites.join(", ") || "all sites"})`);
+  }
+
+  // ── PQS Criteria ────────────────────────────────────────────────────────────
+  console.log("Seeding PQS criteria...");
+
+  const PQS_DATA: { poste: string; criteria: { label: string; amount: number }[] }[] = [
+    {
+      poste: "CHEF DE GROUPE",
+      criteria: [
+        { label: "Note livreur — Objectif > 4,80", amount: 25 },
+        { label: "Ponctualité > 95%", amount: 25 },
+        { label: "Process livraison — Surplace forcé <10%, Commande forcée <10%, Scan >95%", amount: 25 },
+        { label: "Respect des process sur sites", amount: 25 },
+      ],
+    },
+    {
+      poste: "CHAUFFEUR LIVREUR",
+      criteria: [
+        { label: "Note livreur — Objectif > 4,80", amount: 50 },
+        { label: "Respect du créneau — Objectif > 95%", amount: 50 },
+        { label: "Respect des process sur sites", amount: 25 },
+        { label: "100% Docs réglementaires complétés (MOBILIC)", amount: 25 },
+        { label: "Sinistre camion / Propreté camion", amount: 25 },
+        { label: "Process livraison — Commandes forcées, Surplace forcé, Taux de scan", amount: 25 },
+      ],
+    },
+    {
+      poste: "RESPONSABLE METHODE & QUALITE",
+      criteria: [
+        { label: "Budget M-1", amount: 50 },
+        { label: "Weekly à la semaine", amount: 50 },
+        { label: "Moyenne Site NPS > 60, Note livreur < 4,80, Ponctualité >95%, Commandes forcées <10%, Surplace forcé <10%, Taux de scan <10%", amount: 50 },
+        { label: "CID : Forecast / Prévision GEDTRANS", amount: 50 },
+      ],
+    },
+    {
+      poste: "RESPONSABLE EXPLOITATION",
+      criteria: [
+        { label: "Budget M-1", amount: 50 },
+        { label: "Qualité", amount: 50 },
+        { label: "Weekly à la semaine", amount: 50 },
+        { label: "CID", amount: 50 },
+      ],
+    },
+    {
+      poste: "RESPONSABLE DE SERVICE",
+      criteria: [
+        { label: "Casse : 100% déclarée dans Coliweb, Casse cause entrepôt < 5%", amount: 50 },
+        { label: "Vérification des tournées — Commandes partiel 5%", amount: 50 },
+        { label: "Taux de scan sur les 3 contextes > 95%", amount: 50 },
+        { label: "Respect des règles de sécurité (porte coupe-feu, EPI, sorties de secours, accès quai)", amount: 50 },
+      ],
+    },
+    {
+      poste: "AGENT EXPLOIT",
+      criteria: [
+        { label: "Casse : 100% déclarée dans Coliweb, Casse cause entrepôt < 5%", amount: 30 },
+        { label: "Vérification des tournées — Commandes partiel 5%", amount: 30 },
+        { label: "Taux de scan sur les 3 contextes > 95%", amount: 30 },
+        { label: "Dépôt et matériels à nettoyer après chaque utilisation", amount: 10 },
+        { label: "Utilisation chariots avec sécurité, casse accidentelle < 5%", amount: 30 },
+        { label: "Retards/absences justifiés", amount: 20 },
+      ],
+    },
+    {
+      poste: "RESPONSABLE DOSSIER",
+      criteria: [
+        { label: "NPS > 60, Note livreur < 4,80, Ponctualité >95%, Commandes forcées <10%, Surplace forcé <10%, Taux de scan <10%", amount: 25 },
+        { label: "Propreté du site + Suivi balance Bac", amount: 50 },
+        { label: "Moyens humains et matériels optimisés", amount: 50 },
+        { label: "Facturation et Forecast", amount: 50 },
+        { label: "Mobilic complété à la journée", amount: 25 },
+      ],
+    },
+    {
+      poste: "ASSISTANTE DE SITE",
+      criteria: [],
+    },
+    {
+      poste: "CHEF D'EQUIPE",
+      criteria: [
+        { label: "Casse : 100% déclarée dans Coliweb, Casse cause entrepôt < 5%", amount: 50 },
+        { label: "Vérification des tournées — Commandes partiel 5%", amount: 50 },
+        { label: "Taux de scan sur les 3 contextes > 95%", amount: 25 },
+        { label: "Respect des règles de sécurité (porte coupe-feu, EPI, sorties de secours, accès quai)", amount: 25 },
+      ],
+    },
+    {
+      poste: "COORDINATEUR TRANSPORT",
+      criteria: [
+        { label: "Casse : 100% déclarée dans Coliweb, Casse cause entrepôt < 5%", amount: 50 },
+        { label: "Vérification des tournées — Commandes partiel 5%", amount: 50 },
+        { label: "Taux de scan sur les 3 contextes > 95%", amount: 25 },
+        { label: "Respect des règles de sécurité (porte coupe-feu, EPI, sorties de secours, accès quai)", amount: 25 },
+      ],
+    },
+  ];
+
+  for (const { poste: posteLabel, criteria } of PQS_DATA) {
+    const posteConfig = await prisma.posteConfig.findUnique({ where: { label: posteLabel } });
+    if (!posteConfig) {
+      console.warn(`  PosteConfig "${posteLabel}" not found, skipping PQS criteria`);
+      continue;
+    }
+
+    // Delete existing criteria then recreate (idempotent)
+    await prisma.pqsCriteria.deleteMany({ where: { posteConfigId: posteConfig.id } });
+
+    for (let i = 0; i < criteria.length; i++) {
+      await prisma.pqsCriteria.create({
+        data: {
+          posteConfigId: posteConfig.id,
+          label: criteria[i].label,
+          amount: criteria[i].amount,
+          sortOrder: i + 1,
+        },
+      });
+    }
+    console.log(`  ${posteLabel} → ${criteria.length} critères`);
   }
 
   console.log("Seed complete.");

@@ -70,8 +70,28 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const posteConfigs = await prisma.posteConfig.findMany({
       where: { isActive: true },
+      include: {
+        pqsCriteria: {
+          where: { isActive: true },
+          select: { id: true, amount: true },
+        },
+      },
     });
     const posteMap = new Map(posteConfigs.map((p) => [p.label.toLowerCase(), Number(p.mealAllowance)]));
+    const postePqsCriteriaMap = new Map(
+      posteConfigs.map((p) => [p.label.toLowerCase(), p.pqsCriteria]),
+    );
+
+    // Fetch all PQS evaluations for this month in a single query
+    const employeeIds = employees.map((e) => e.id);
+    const pqsEvaluations = await prisma.pqsEvaluation.findMany({
+      where: { employeeId: { in: employeeIds }, year, month },
+      select: {
+        employeeId: true,
+        items: { select: { criteriaId: true, achieved: true } },
+      },
+    });
+    const pqsMap = new Map(pqsEvaluations.map((ev) => [ev.employeeId, ev]));
 
     const rows = employees.map((emp) => {
       let joursTravailles = 0;
@@ -98,6 +118,15 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       const mealRate = posteMap.get(emp.poste.toLowerCase()) ?? 0;
       const montantPanier = Math.round(joursTravailles * mealRate * 100) / 100;
 
+      const pqsEval = pqsMap.get(emp.id);
+      const achievedIds = new Set(
+        pqsEval?.items.filter((i) => i.achieved).map((i) => i.criteriaId) ?? [],
+      );
+      const pqsCriteria = postePqsCriteriaMap.get(emp.poste.toLowerCase()) ?? [];
+      const montantPqs = Math.round(
+        pqsCriteria.filter((c) => achievedIds.has(c.id)).reduce((s, c) => s + Number(c.amount), 0) * 100,
+      ) / 100;
+
       return {
         employeeId: emp.id,
         matricule: emp.matricule,
@@ -113,6 +142,8 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         nbPanierRepas: joursTravailles,
         tarifPanier: mealRate,
         montantPanier,
+        montantPqs,
+        pqsEvalue: pqsEval !== undefined,
       };
     });
 
@@ -126,6 +157,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         heuresTotales: Math.round(rows.reduce((s, r) => s + r.heuresTotales, 0) * 100) / 100,
         heuresNuit: Math.round(rows.reduce((s, r) => s + r.heuresNuit, 0) * 100) / 100,
         montantPanier: Math.round(rows.reduce((s, r) => s + r.montantPanier, 0) * 100) / 100,
+        montantPqs: Math.round(rows.reduce((s, r) => s + r.montantPqs, 0) * 100) / 100,
       },
     });
   } catch (err) {

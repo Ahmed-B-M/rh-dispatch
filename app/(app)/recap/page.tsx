@@ -18,6 +18,7 @@ import {
   Search,
   ArrowUpDown,
   ExternalLink,
+  Award,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +37,8 @@ interface RecapRow {
   nbPanierRepas: number;
   tarifPanier: number;
   montantPanier: number;
+  montantPqs: number;
+  pqsEvalue: boolean;
 }
 
 interface RecapData {
@@ -48,6 +51,7 @@ interface RecapData {
     heuresTotales: number;
     heuresNuit: number;
     montantPanier: number;
+    montantPqs: number;
   };
 }
 
@@ -57,7 +61,7 @@ interface Site {
   label: string;
 }
 
-type SortField = "nom" | "joursTravailles" | "heuresTotales" | "heuresNuit" | "montantPanier";
+type SortField = "nom" | "joursTravailles" | "heuresTotales" | "heuresNuit" | "montantPanier" | "montantPqs";
 type SortDir = "asc" | "desc";
 
 const MONTHS = [
@@ -366,6 +370,20 @@ function RecapContent() {
               </p>
             </div>
           </div>
+          <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-soft">
+            <div className="rounded-lg bg-emerald-50 p-2 text-emerald-600">
+              <Award className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-400">Total PQS</p>
+              <p className="text-lg font-bold text-slate-900">
+                {totals.montantPqs.toLocaleString("fr-FR", {
+                  minimumFractionDigits: 2,
+                })}{" "}
+                €
+              </p>
+            </div>
+          </div>
         </div>
       )}
 
@@ -449,6 +467,15 @@ function RecapContent() {
                   <span className="inline-flex items-center justify-end gap-1">
                     Montant
                     <ArrowUpDown className={cn("h-3 w-3", sortField === "montantPanier" ? "text-primary-500" : "text-slate-300")} />
+                  </span>
+                </th>
+                <th
+                  className="cursor-pointer px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-emerald-600 hover:text-emerald-700"
+                  onClick={() => toggleSort("montantPqs")}
+                >
+                  <span className="inline-flex items-center justify-end gap-1">
+                    PQS
+                    <ArrowUpDown className={cn("h-3 w-3", sortField === "montantPqs" ? "text-emerald-500" : "text-slate-300")} />
                   </span>
                 </th>
               </tr>
@@ -536,6 +563,23 @@ function RecapContent() {
                       ? `${row.montantPanier.toFixed(2)} €`
                       : "—"}
                   </td>
+                  <td
+                    className={cn(
+                      "px-4 py-3 text-right font-bold",
+                      row.montantPqs > 0
+                        ? "text-emerald-600"
+                        : row.pqsEvalue
+                          ? "text-slate-400"
+                          : "text-slate-200",
+                    )}
+                    title={!row.pqsEvalue ? "PQS non évalué ce mois" : undefined}
+                  >
+                    {row.pqsEvalue
+                      ? row.montantPqs > 0
+                        ? `${row.montantPqs.toFixed(2)} €`
+                        : "0,00 €"
+                      : "—"}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -561,6 +605,9 @@ function RecapContent() {
                   <td className="px-4 py-3 text-right" />
                   <td className="px-4 py-3 text-right text-amber-600">
                     {rows.reduce((s, r) => s + r.montantPanier, 0).toFixed(2)} €
+                  </td>
+                  <td className="px-4 py-3 text-right text-emerald-600">
+                    {rows.reduce((s, r) => s + r.montantPqs, 0).toFixed(2)} €
                   </td>
                 </tr>
               </tfoot>
