@@ -18,7 +18,10 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
     if (allowedSites) {
-      employeeWhere.sites = { some: { siteId: { in: allowedSites } } };
+      if (allowedSites.length === 0) {
+        return NextResponse.json({ activeEmployees: 0, totalHours: 0, totalPaniers: 0, joursTravailles: 0 });
+      }
+      employeeWhere.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
     }
 
     const activeEmployees = await prisma.employee.count({ where: employeeWhere });
@@ -27,7 +30,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       date: { gte: monthStart, lte: monthEnd },
     };
     if (allowedSites) {
-      entryWhere.employee = { sites: { some: { siteId: { in: allowedSites } } } };
+      entryWhere.employee = { isActive: true, sites: { some: { siteId: { in: allowedSites }, endDate: null } } };
     }
 
     const NON_ABSENCE_CODES = new Set([

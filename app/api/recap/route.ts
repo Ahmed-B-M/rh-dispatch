@@ -23,6 +23,9 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (siteId) {
       employeeWhere.sites = { some: { siteId, endDate: null } };
     } else if (allowedSites) {
+      if (allowedSites.length === 0) {
+        return NextResponse.json([]);
+      }
       employeeWhere.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
     }
     if (categorie) {

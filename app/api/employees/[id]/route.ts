@@ -48,24 +48,25 @@ export async function PUT(req: NextRequest, ctx: RouteContext): Promise<NextResp
     if (employeeData.dateEntree) updateData.dateEntree = new Date(employeeData.dateEntree);
     if (employeeData.dateSortie !== undefined) updateData.dateSortie = employeeData.dateSortie ? new Date(employeeData.dateSortie) : null;
 
-    if (siteIds !== undefined) {
-      await prisma.employeeSite.deleteMany({ where: { employeeId: id } });
-      if (siteIds.length > 0) {
-        await prisma.employeeSite.createMany({
-          data: siteIds.map((siteId, i) => ({
-            employeeId: id,
-            siteId,
-            isPrimary: i === 0,
-            startDate: new Date(),
-          })),
-        });
+    const employee = await prisma.$transaction(async (tx) => {
+      if (siteIds !== undefined) {
+        await tx.employeeSite.deleteMany({ where: { employeeId: id } });
+        if (siteIds.length > 0) {
+          await tx.employeeSite.createMany({
+            data: siteIds.map((siteId, i) => ({
+              employeeId: id,
+              siteId,
+              isPrimary: i === 0,
+              startDate: new Date(),
+            })),
+          });
+        }
       }
-    }
-
-    const employee = await prisma.employee.update({
-      where: { id },
-      data: updateData,
-      include: { sites: { include: { site: true } } },
+      return tx.employee.update({
+        where: { id },
+        data: updateData,
+        include: { sites: { include: { site: true } } },
+      });
     });
 
     return NextResponse.json(employee);

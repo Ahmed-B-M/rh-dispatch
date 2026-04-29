@@ -38,9 +38,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     if (postes.length === 1) employeeWhere.poste = postes[0];
     else if (postes.length > 1) employeeWhere.poste = { in: postes };
     if (siteId) {
-      employeeWhere.sites = { some: { siteId } };
+      employeeWhere.sites = { some: { siteId, endDate: null } };
     } else if (allowedSites) {
-      employeeWhere.sites = { some: { siteId: { in: allowedSites } } };
+      if (allowedSites.length === 0) {
+        return NextResponse.json({ from: format(periodStart, "yyyy-MM-dd"), to: format(periodEnd, "yyyy-MM-dd"), days, matrix: [] });
+      }
+      employeeWhere.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
     }
 
     const employees = await prisma.employee.findMany({

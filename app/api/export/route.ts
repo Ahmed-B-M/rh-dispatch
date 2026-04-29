@@ -26,9 +26,13 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       if (to) (where.date as Record<string, unknown>).lte = new Date(to);
     }
     if (siteId) {
-      where.employee = { sites: { some: { siteId } } };
+      where.employee = { sites: { some: { siteId, endDate: null } } };
     } else if (allowedSites) {
-      where.employee = { sites: { some: { siteId: { in: allowedSites } } } };
+      if (allowedSites.length === 0) {
+        where.employee = { id: { in: [] } };
+      } else {
+        where.employee = { sites: { some: { siteId: { in: allowedSites }, endDate: null } } };
+      }
     }
 
     const entries = await prisma.workEntry.findMany({

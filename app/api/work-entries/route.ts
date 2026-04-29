@@ -42,9 +42,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const employeeFilter: Record<string, unknown> = {};
     if (siteId) {
-      employeeFilter.sites = { some: { siteId } };
+      employeeFilter.sites = { some: { siteId, endDate: null } };
     } else if (allowedSites) {
-      employeeFilter.sites = { some: { siteId: { in: allowedSites } } };
+      if (allowedSites.length === 0) {
+        return NextResponse.json({ rows: [], total: 0, page, limit });
+      }
+      employeeFilter.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
     }
     if (categorie) {
       employeeFilter.categorie = categorie;

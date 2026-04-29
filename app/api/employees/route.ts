@@ -32,9 +32,12 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     if (siteId) {
-      where.sites = { some: { siteId } };
+      where.sites = { some: { siteId, endDate: null } };
     } else if (allowedSites) {
-      where.sites = { some: { siteId: { in: allowedSites } } };
+      if (allowedSites.length === 0) {
+        return NextResponse.json([]);
+      }
+      where.sites = { some: { siteId: { in: allowedSites }, endDate: null } };
     }
 
     const employees = await prisma.employee.findMany({
