@@ -8,12 +8,15 @@ export async function GET(): Promise<NextResponse> {
     const session = await requireAuth();
     const allowedSites = await getEffectiveAllowedSiteIds(session);
 
+    console.log("[/api/sites] user:", session.user.email, "role:", session.user.role, "jwtSiteIds:", session.user.allowedSiteIds, "effectiveSiteIds:", allowedSites);
+
     const where = allowedSites ? { id: { in: allowedSites } } : {};
     const sites = await prisma.site.findMany({
       where,
       orderBy: { code: "asc" },
       include: { _count: { select: { employees: true } } },
     });
+    console.log("[/api/sites] returning", sites.length, "sites for", session.user.email);
     return NextResponse.json(sites);
   } catch (err) {
     if (err instanceof NextResponse) return err;
