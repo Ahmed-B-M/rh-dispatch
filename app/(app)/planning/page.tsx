@@ -268,7 +268,7 @@ function PlanningContent() {
     [absenceCodes],
   );
 
-  const { data: sites = [] } = useQuery<Site[]>({
+  const { data: sites = [], isSuccess: sitesLoaded } = useQuery<Site[]>({
     queryKey: ["sites"],
     queryFn: async () => {
       const res = await fetch("/api/sites");
@@ -284,6 +284,13 @@ function PlanningContent() {
     }
   }, [sites, filterSiteId, updateFilters]);
 
+  // For RESPONSABLE with a single site, we must wait for auto-selection before
+  // firing the planning query — otherwise the first request has no siteId and
+  // falls back to the (possibly stale) JWT allowedSiteIds.
+  const planningReady =
+    sitesLoaded &&
+    (sites.length !== 1 || !!filterSiteId);
+
   const { data: postes = [] } = useQuery<PosteConfig[]>({
     queryKey: ["postes"],
     queryFn: async () => {
@@ -295,6 +302,7 @@ function PlanningContent() {
 
   const { data, isLoading } = useQuery<PlanningData>({
     queryKey: planningQueryKey,
+    enabled: planningReady,
     queryFn: async () => {
       const params = new URLSearchParams({ from: fromStr, to: toStr });
       if (filterCategorie) params.set("categorie", filterCategorie);
