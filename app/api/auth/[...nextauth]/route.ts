@@ -48,22 +48,31 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role;
         token.allowedSiteIds = user.allowedSiteIds ?? [];
         token.allowedPages = user.allowedPages ?? [];
+        token.refreshedAt = Date.now();
       }
-      if (trigger === "update") {
+
+      const shouldRefresh =
+        trigger === "update" ||
+        !token.refreshedAt ||
+        Date.now() - (token.refreshedAt as number) > 5 * 60 * 1000; // 5 min
+
+      if (shouldRefresh && token.id) {
         try {
           const dbUser = await prisma.user.findUnique({
-            where: { id: token.id },
+            where: { id: token.id as string },
             include: { sites: { select: { siteId: true } } },
           });
           if (dbUser) {
             token.role = dbUser.role;
             token.allowedSiteIds = dbUser.sites.map((s) => s.siteId);
             token.allowedPages = dbUser.allowedPages ?? [];
+            token.refreshedAt = Date.now();
           }
         } catch {
           // DB unreachable — keep existing token values
         }
       }
+
       if (!token.allowedSiteIds) token.allowedSiteIds = [];
       if (!token.allowedPages) token.allowedPages = [];
       return token;
