@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
-import { Plus, Shield, UserPlus, Trash2, Briefcase, Pencil, Check, X } from "lucide-react";
+import { Plus, Shield, UserPlus, Trash2, Briefcase, Pencil, Check, X, KeyRound } from "lucide-react";
 import { PageHelp } from "@/components/ui/page-help";
 import { toast } from "sonner";
 
@@ -43,6 +43,10 @@ export default function ParametresPage() {
     siteIds: [] as string[],
   });
 
+  const [editingUserId, setEditingUserId] = useState<string | null>(null);
+  const [editUser, setEditUser] = useState({ name: "", email: "", role: "RESPONSABLE", siteIds: [] as string[], password: "" });
+  const [deleteUserConfirm, setDeleteUserConfirm] = useState<UserItem | null>(null);
+
   const [showPosteForm, setShowPosteForm] = useState(false);
   const [newPoste, setNewPoste] = useState({ label: "", mealAllowance: "", pauseMinutes: "" });
   const [editingPosteId, setEditingPosteId] = useState<string | null>(null);
@@ -75,6 +79,44 @@ export default function ParametresPage() {
       if (!res.ok) throw new Error(`Erreur ${res.status}`);
       return res.json();
     },
+  });
+
+  const updateUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const body: Record<string, unknown> = {
+        name: editUser.name,
+        email: editUser.email,
+        role: editUser.role,
+        siteIds: editUser.role === "RESPONSABLE" ? editUser.siteIds : [],
+      };
+      if (editUser.password) body.password = editUser.password;
+      const res = await fetch(`/api/users/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error("Erreur de modification");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setEditingUserId(null);
+      toast.success("Utilisateur mis à jour");
+    },
+    onError: (err: Error) => toast.error(err.message),
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Erreur de suppression");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+      setDeleteUserConfirm(null);
+      toast.success("Utilisateur supprimé");
+    },
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const createUserMutation = useMutation({
@@ -155,6 +197,15 @@ export default function ParametresPage() {
 
   function toggleSite(siteId: string) {
     setNewUser((prev) => ({
+      ...prev,
+      siteIds: prev.siteIds.includes(siteId)
+        ? prev.siteIds.filter((id) => id !== siteId)
+        : [...prev.siteIds, siteId],
+    }));
+  }
+
+  function toggleEditSite(siteId: string) {
+    setEditUser((prev) => ({
       ...prev,
       siteIds: prev.siteIds.includes(siteId)
         ? prev.siteIds.filter((id) => id !== siteId)
@@ -515,39 +566,180 @@ export default function ParametresPage() {
             {users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-5 py-4 shadow-soft"
+                className="rounded-xl border border-slate-200 bg-white shadow-soft"
               >
-                <div>
-                  <p className="font-medium text-slate-900">{user.name}</p>
-                  <p className="text-xs text-slate-400">{user.email}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {user.sites.length > 0 && (
-                    <div className="flex gap-1">
-                      {user.sites.map((s) => (
-                        <span
-                          key={s.site.id}
-                          className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500"
-                        >
-                          {s.site.code}
-                        </span>
-                      ))}
+                {editingUserId === user.id ? (
+                  <div className="space-y-4 p-5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Nom</label>
+                        <input
+                          value={editUser.name}
+                          onChange={(e) => setEditUser((p) => ({ ...p, name: e.target.value }))}
+                          className="w-full rounded-lg border border-primary-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Email</label>
+                        <input
+                          type="email"
+                          value={editUser.email}
+                          onChange={(e) => setEditUser((p) => ({ ...p, email: e.target.value }))}
+                          className="w-full rounded-lg border border-primary-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+                        />
+                      </div>
                     </div>
-                  )}
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.role === "ADMIN"
-                        ? "bg-red-100 text-red-700"
-                        : "bg-blue-100 text-blue-700"
-                    }`}
-                  >
-                    {user.role}
-                  </span>
-                </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Rôle</label>
+                        <select
+                          value={editUser.role}
+                          onChange={(e) => setEditUser((p) => ({ ...p, role: e.target.value }))}
+                          className="w-full rounded-lg border border-primary-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+                        >
+                          <option value="ADMIN">Admin</option>
+                          <option value="RESPONSABLE">Responsable</option>
+                        </select>
+                      </div>
+                      <div className="space-y-1">
+                        <label className="flex items-center gap-1 text-xs font-medium text-slate-500">
+                          <KeyRound className="h-3 w-3" /> Nouveau mot de passe (optionnel)
+                        </label>
+                        <input
+                          type="password"
+                          placeholder="Laisser vide pour ne pas changer"
+                          value={editUser.password}
+                          onChange={(e) => setEditUser((p) => ({ ...p, password: e.target.value }))}
+                          className="w-full rounded-lg border border-primary-300 px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-primary-500/20"
+                        />
+                      </div>
+                    </div>
+                    {editUser.role === "RESPONSABLE" && (
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-slate-500">Sites autorisés</label>
+                        <div className="flex flex-wrap gap-2">
+                          {sites.map((site) => (
+                            <button
+                              key={site.id}
+                              type="button"
+                              onClick={() => toggleEditSite(site.id)}
+                              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
+                                editUser.siteIds.includes(site.id)
+                                  ? "border-primary-500 bg-primary-50 text-primary-700"
+                                  : "border-slate-200 text-slate-600 hover:border-slate-300"
+                              }`}
+                            >
+                              {site.code}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex justify-end gap-2">
+                      <button
+                        onClick={() => setEditingUserId(null)}
+                        className="rounded-lg border border-slate-200 px-4 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
+                      >
+                        Annuler
+                      </button>
+                      <button
+                        onClick={() => updateUserMutation.mutate(user.id)}
+                        disabled={!editUser.name || !editUser.email || updateUserMutation.isPending}
+                        className="rounded-lg bg-primary-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
+                      >
+                        {updateUserMutation.isPending ? "Enregistrement…" : "Enregistrer"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between px-5 py-4">
+                    <div>
+                      <p className="font-medium text-slate-900">{user.name}</p>
+                      <p className="text-xs text-slate-400">{user.email}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {user.sites.length > 0 && (
+                        <div className="flex gap-1">
+                          {user.sites.map((s) => (
+                            <span
+                              key={s.site.id}
+                              className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-500"
+                            >
+                              {s.site.code}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                          user.role === "ADMIN"
+                            ? "bg-red-100 text-red-700"
+                            : "bg-blue-100 text-blue-700"
+                        }`}
+                      >
+                        {user.role}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setEditingUserId(user.id);
+                          setEditUser({
+                            name: user.name,
+                            email: user.email,
+                            role: user.role,
+                            siteIds: user.sites.map((s) => s.site.id),
+                            password: "",
+                          });
+                        }}
+                        className="rounded p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => setDeleteUserConfirm(user)}
+                        className="rounded p-1.5 text-slate-400 hover:bg-red-50 hover:text-red-500"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </section>
+      )}
+
+      {/* Delete user dialog */}
+      {deleteUserConfirm && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/30"
+            onClick={() => setDeleteUserConfirm(null)}
+          />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-slate-200 bg-white p-6 shadow-elevated">
+            <h3 className="text-lg font-bold text-slate-900">
+              Supprimer &laquo; {deleteUserConfirm.name} &raquo; ?
+            </h3>
+            <p className="mt-2 text-sm text-slate-500">
+              L&apos;utilisateur sera définitivement supprimé. Cette action est irréversible.
+            </p>
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => setDeleteUserConfirm(null)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => deleteUserMutation.mutate(deleteUserConfirm.id)}
+                disabled={deleteUserMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleteUserMutation.isPending ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </>
       )}
 
       {/* Delete poste dialog */}
