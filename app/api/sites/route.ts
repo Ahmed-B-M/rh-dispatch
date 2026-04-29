@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, requireAdmin } from "@/lib/auth";
+import { requireAuth, requireAdmin, getAllowedSiteIds } from "@/lib/auth";
 import { siteCreateSchema } from "@/lib/validations";
 
 export async function GET(): Promise<NextResponse> {
   try {
-    await requireAuth();
+    const session = await requireAuth();
+    const allowedSites = getAllowedSiteIds(session);
+
+    const where = allowedSites ? { id: { in: allowedSites } } : {};
     const sites = await prisma.site.findMany({
+      where,
       orderBy: { code: "asc" },
       include: { _count: { select: { employees: true } } },
     });

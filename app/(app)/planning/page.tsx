@@ -277,6 +277,13 @@ function PlanningContent() {
     },
   });
 
+  // Auto-select the only available site when the user has access to exactly one
+  useEffect(() => {
+    if (sites.length === 1 && !filterSiteId) {
+      updateFilters({ siteId: sites[0].id });
+    }
+  }, [sites, filterSiteId, updateFilters]);
+
   const { data: postes = [] } = useQuery<PosteConfig[]>({
     queryKey: ["postes"],
     queryFn: async () => {
