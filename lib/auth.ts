@@ -33,6 +33,22 @@ export function getAllowedSiteIds(session: Session): string[] | null {
   return session.user.allowedSiteIds;
 }
 
+// DB-backed fallback: if JWT has stale empty allowedSiteIds, re-read from DB.
+// Prevents RESPONSABLE users from seeing an empty planning right after login.
+export async function getEffectiveAllowedSiteIds(
+  session: Session,
+): Promise<string[] | null> {
+  if (isAdmin(session)) return null;
+  const fromJwt = session.user.allowedSiteIds ?? [];
+  if (fromJwt.length > 0) return fromJwt;
+  // JWT is stale — re-read from DB
+  const rows = await prisma.userSite.findMany({
+    where: { userId: session.user.id as string },
+    select: { siteId: true },
+  });
+  return rows.map((r) => r.siteId);
+}
+
 export async function assertEmployeeInScope(
   session: Session,
   employeeId: string,

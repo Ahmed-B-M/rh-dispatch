@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, requireAdmin, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, requireAdmin, getEffectiveAllowedSiteIds } from "@/lib/auth";
 import { siteCreateSchema } from "@/lib/validations";
 
 export async function GET(): Promise<NextResponse> {
   try {
     const session = await requireAuth();
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const where = allowedSites ? { id: { in: allowedSites } } : {};
     const sites = await prisma.site.findMany({

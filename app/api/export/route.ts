@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, getEffectiveAllowedSiteIds } from "@/lib/auth";
 import { generateExcel } from "@/lib/excel-export";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       | "employee"
       | "month";
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const where: Record<string, unknown> = {};
     if (from || to) {

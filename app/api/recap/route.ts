@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, getEffectiveAllowedSiteIds } from "@/lib/auth";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { nightHoursOverlap } from "@/lib/time-utils";
 
@@ -17,7 +17,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const monthStart = startOfMonth(new Date(year, month - 1));
     const monthEnd = endOfMonth(monthStart);
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
     if (siteId) {

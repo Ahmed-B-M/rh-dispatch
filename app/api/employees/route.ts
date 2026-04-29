@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, requireAdmin, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, requireAdmin, getEffectiveAllowedSiteIds } from "@/lib/auth";
 import { employeeCreateSchema } from "@/lib/validations";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -13,7 +13,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const siteId = searchParams.get("siteId");
     const search = searchParams.get("search");
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const where: Record<string, unknown> = {};
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, getEffectiveAllowedSiteIds } from "@/lib/auth";
 import {
   startOfWeek,
   endOfWeek,
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
       (d) => format(d, "yyyy-MM-dd"),
     );
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
     if (categorie) employeeWhere.categorie = categorie;

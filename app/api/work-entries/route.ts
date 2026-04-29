@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds, assertEmployeeInScope } from "@/lib/auth";
+import { requireAuth, getEffectiveAllowedSiteIds, assertEmployeeInScope } from "@/lib/auth";
 import { workEntryCreateSchema } from "@/lib/validations";
 import { computeWorkDuration, getDayNameFr, getWeekNumber } from "@/lib/time-utils";
 
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const sortField = searchParams.get("sortField") ?? "date";
     const sortDir = searchParams.get("sortDir") ?? "desc";
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const where: Record<string, unknown> = {};
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireAuth, getAllowedSiteIds } from "@/lib/auth";
+import { requireAuth, getEffectiveAllowedSiteIds } from "@/lib/auth";
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
@@ -12,7 +12,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const siteId = searchParams.get("siteId") || undefined;
     const categorie = searchParams.get("categorie") || undefined;
 
-    const allowedSites = getAllowedSiteIds(session);
+    const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
     if (siteId) {
