@@ -39,6 +39,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  // API routes always pass — they enforce their own access control via requireAuth()
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
   // RESPONSABLE: enforce allowedPages if the list is non-empty
   const allowedPages = Array.isArray(token.allowedPages)
     ? (token.allowedPages as string[])
