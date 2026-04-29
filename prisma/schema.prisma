@@ -114,6 +114,7 @@ model Employee {
   dateEntree      DateTime
   dateSortie      DateTime?
   isActive        Boolean          @default(true)
+  isAppUser       Boolean          @default(false)
   photoUrl        String?
   note            String?
   sites           EmployeeSite[]
