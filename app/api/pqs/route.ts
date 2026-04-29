@@ -15,9 +15,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     const allowedSites = await getEffectiveAllowedSiteIds(session);
 
     const employeeWhere: Record<string, unknown> = { isActive: true };
-    if (session.user.role !== "ADMIN") {
-      employeeWhere.isAppUser = false;
-    }
     if (siteId) {
       employeeWhere.sites = { some: { siteId, endDate: null } };
     } else if (allowedSites) {

@@ -17,10 +17,6 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     const where: Record<string, unknown> = {};
 
-    if (session.user.role !== "ADMIN") {
-      where.isAppUser = false;
-    }
-
     if (isActive !== null) {
       where.isActive = isActive === "true";
     }
